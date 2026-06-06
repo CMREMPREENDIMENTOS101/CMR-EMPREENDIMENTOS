@@ -1,0 +1,18 @@
+{
+  "name": "CMR Diário de Obras",
+  "short_name": "CMR Obras",
+  "description": "Sistema interno de gestão de diários de obra — CMR Empreendimentos",
+  "start_url": "/obras",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

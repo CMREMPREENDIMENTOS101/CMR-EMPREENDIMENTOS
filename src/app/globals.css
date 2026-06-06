@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ── Form utility classes ─────────────────────────────────────── */
+@layer components {
+  .input {
+    @apply w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed;
+  }
+
+  .input-inline {
+    @apply w-full px-2 py-1 border-0 border-b border-gray-200 text-sm bg-transparent focus:outline-none focus:border-orange-400 disabled:text-gray-500 disabled:cursor-not-allowed;
+  }
+
+  .label {
+    @apply block text-xs font-medium text-gray-500 mb-1;
+  }
+
+  .btn-add {
+    @apply text-sm text-orange-500 hover:text-orange-700 font-medium flex items-center gap-1 mt-1;
+  }
+}
