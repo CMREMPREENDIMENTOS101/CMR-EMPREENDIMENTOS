@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: Props) {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-orange-500 mb-4">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-red-600 mb-4">
               <span className="text-white font-bold text-xl">CMR</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Diário de Obras</h1>
@@ -39,7 +39,7 @@ export default async function LoginPage({ searchParams }: Props) {
                 type="email"
                 autoComplete="email"
                 required
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 placeholder="seu@email.com"
               />
             </div>
@@ -57,14 +57,14 @@ export default async function LoginPage({ searchParams }: Props) {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 placeholder="••••••••"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors mt-2"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-colors mt-2"
             >
               Entrar
             </button>

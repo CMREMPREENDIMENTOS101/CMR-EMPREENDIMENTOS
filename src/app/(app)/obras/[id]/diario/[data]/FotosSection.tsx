@@ -64,7 +64,6 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
     setError('')
     setUploading(true)
 
-    // Garante bucket na primeira tentativa de upload
     await ensureBucket()
 
     const supabase = createClient()
@@ -94,7 +93,6 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
         const res = await salvarFotoDb(diarioId, path, '', fotos.length + i)
         if (res?.error) {
           erros.push(res.error)
-          // Remove do storage se o DB falhou
           await supabase.storage.from(BUCKET).remove([path])
         }
       } catch {
@@ -123,10 +121,9 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
     await loadFotos()
   }
 
-  // ── Sem diário salvo ────────────────────────────────────────────────
   if (!diarioId) {
     return (
-      <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+      <div className="text-center py-8 rounded-xl" style={{ color: '#475569', border: '2px dashed rgba(255,255,255,0.12)' }}>
         <p className="text-2xl mb-1">📷</p>
         <p className="text-sm">Salve o diário primeiro para habilitar o upload de fotos</p>
       </div>
@@ -143,7 +140,6 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* Upload */}
       {!isAprovado && (
         <>
           <input
@@ -158,17 +154,17 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
           <button
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="w-full py-6 border-2 border-dashed border-orange-200 rounded-xl flex flex-col items-center gap-1.5 text-orange-500 hover:bg-orange-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-6 rounded-xl flex flex-col items-center gap-1.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ border: '2px dashed rgba(220,38,38,0.35)', color: '#dc2626' }}
           >
             <span className="text-2xl">{uploading ? '⏳' : '📷'}</span>
             <span className="text-sm font-medium">{uploading ? 'Comprimindo e enviando...' : 'Clique para adicionar fotos'}</span>
-            <span className="text-xs text-gray-400">JPG · PNG · WEBP · HEIC · Múltiplos arquivos · Compressão automática</span>
+            <span className="text-xs" style={{ color: '#475569' }}>JPG · PNG · WEBP · HEIC · Múltiplos arquivos · Compressão automática</span>
           </button>
           {error && <p className="text-sm text-red-600">{error}</p>}
         </>
       )}
 
-      {/* Grid */}
       {fotos.length === 0 && isAprovado && (
         <p className="text-sm text-gray-400 text-center py-4">Nenhuma foto registrada neste diário.</p>
       )}
@@ -178,7 +174,7 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
           {fotos.map((foto) => (
             <div
               key={foto.id}
-              className="group relative rounded-xl overflow-hidden bg-gray-100 aspect-square cursor-pointer ring-0 hover:ring-2 hover:ring-orange-300 transition-all"
+              className="group relative rounded-xl overflow-hidden aspect-square cursor-pointer ring-0 hover:ring-2 hover:ring-red-400 transition-all" style={{ background: 'rgba(255,255,255,0.05)' }}
               onClick={() => setPreview(foto)}
             >
               {foto.signedUrl ? (
@@ -202,7 +198,6 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
         </div>
       )}
 
-      {/* Lightbox */}
       {preview && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
@@ -223,19 +218,18 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
               <div className="flex items-center justify-center h-64 text-gray-400">Imagem indisponível</div>
             )}
 
-            {/* Legenda editável */}
             <div className="mt-3">
               {editingLegenda?.id === preview.id ? (
                 <div className="flex gap-2">
                   <input
                     value={editingLegenda.value}
                     onChange={(e) => setEditingLegenda({ ...editingLegenda, value: e.target.value })}
-                    className="flex-1 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm placeholder-gray-400 border border-white/20 focus:outline-none focus:border-orange-400"
+                    className="flex-1 px-3 py-1.5 rounded-lg bg-white/10 text-white text-sm placeholder-gray-400 border border-white/20 focus:outline-none focus:border-red-400"
                     placeholder="Legenda da foto..."
                     autoFocus
                     onKeyDown={(e) => { if (e.key === 'Enter') handleSaveLegenda(); if (e.key === 'Escape') setEditingLegenda(null) }}
                   />
-                  <button onClick={handleSaveLegenda} className="px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs rounded-lg font-medium">
+                  <button onClick={handleSaveLegenda} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg font-medium">
                     Salvar
                   </button>
                   <button onClick={() => setEditingLegenda(null)} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs rounded-lg">
@@ -259,7 +253,6 @@ export default function FotosSection({ obraId, diarioId, isAprovado }: Props) {
               )}
             </div>
 
-            {/* Ações */}
             <div className="absolute top-2 right-2 flex gap-2">
               {!isAprovado && (
                 <button

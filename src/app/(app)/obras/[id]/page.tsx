@@ -16,6 +16,13 @@ const OCORR_CONFIG: Record<OcorrClasse, { label: string; style: string; dot: str
   informativa: { label: 'Informativa', style: 'bg-gray-50', dot: 'bg-gray-400' },
 }
 
+const card = {
+  background: '#1e293b',
+  borderRadius: 12,
+  border: '1px solid rgba(255,255,255,0.07)',
+  padding: 20,
+}
+
 export default async function ObraDashboardPage({
   params,
 }: {
@@ -26,7 +33,6 @@ export default async function ObraDashboardPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // ── Round 1: dados principais ────────────────────────────────────
   const [{ data: obra }, { data: etapas }, { data: diarios }] = await Promise.all([
     supabase.from('obras').select('*').eq('id', id).single(),
     supabase.from('etapas').select('id, nome, percentual_real, percentual_previsto').eq('obra_id', id).order('nome'),
@@ -35,7 +41,6 @@ export default async function ObraDashboardPage({
 
   if (!obra) notFound()
 
-  // ── Round 2: HH e alertas (dependem dos IDs dos diários) ─────────
   const dataCorte = new Date()
   dataCorte.setDate(dataCorte.getDate() - 29)
   const dataCorteStr = dataCorte.toISOString().split('T')[0]
@@ -48,21 +53,13 @@ export default async function ObraDashboardPage({
 
   if (ids30.length > 0) {
     const [{ data: mdo }, { data: alertasData }] = await Promise.all([
-      supabase
-        .from('diario_mao_de_obra')
-        .select('diario_id, quantidade, horas')
-        .in('diario_id', ids30),
-      supabase
-        .from('diario_ocorrencias')
-        .select('id, descricao, classe, diario_id')
-        .in('diario_id', ids30)
-        .in('classe', ['critica', 'alerta']),
+      supabase.from('diario_mao_de_obra').select('diario_id, quantidade, horas').in('diario_id', ids30),
+      supabase.from('diario_ocorrencias').select('id, descricao, classe, diario_id').in('diario_id', ids30).in('classe', ['critica', 'alerta']),
     ])
     mdoRange = mdo ?? []
     alertasRaw = (alertasData ?? []) as typeof alertasRaw
   }
 
-  // ── Cálculos ──────────────────────────────────────────────────────
   const avanco =
     etapas && etapas.length > 0
       ? Math.round(etapas.reduce((s, e) => s + e.percentual_real, 0) / etapas.length)
@@ -72,7 +69,6 @@ export default async function ObraDashboardPage({
     ? Math.max(0, Math.floor((Date.now() - new Date(obra.data_inicio + 'T00:00:00').getTime()) / 86400000))
     : null
 
-  // HH por data
   const hhMap = new Map<string, number>()
   for (const d of diariosRecentes) hhMap.set(d.data, 0)
   for (const r of mdoRange) {
@@ -88,7 +84,6 @@ export default async function ObraDashboardPage({
 
   const totalHH30 = Math.round(mdoRange.reduce((s, r) => s + r.quantidade * r.horas, 0))
 
-  // Alertas recentes
   const alertasComData = alertasRaw
     .map((a) => ({ ...a, data: diariosRecentes.find((d) => d.id === a.diario_id)?.data ?? '' }))
     .filter((a) => a.data)
@@ -98,37 +93,39 @@ export default async function ObraDashboardPage({
   const cfg = STATUS_CONFIG[obra.status as ObraStatus]
   const hoje = new Date().toISOString().split('T')[0]
 
-  const navLinks = [
-    { href: `/obras/${id}/diario`, label: 'Diários', icon: '📋' },
-    { href: `/obras/${id}/cronograma`, label: 'Cronograma', icon: '📅' },
-    { href: `/obras/${id}/relatorios`, label: 'Relatórios', icon: '📊' },
-  ]
-
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      {/* Breadcrumb */}
-      <div className="mb-6">
-        <Link href="/obras" className="text-sm text-gray-400 hover:text-gray-600">
-          ← Obras
-        </Link>
-        <div className="flex items-start justify-between mt-2 gap-4">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 leading-tight">{obra.nome}</h1>
-            {obra.endereco && <p className="text-sm text-gray-500 mt-0.5">{obra.endereco}</p>}
-          </div>
-          <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.badge}`}>
-            {cfg.label}
-          </span>
+    <div style={{ padding: '24px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3, margin: 0 }}>{obra.nome}</h1>
+          {obra.endereco && <p style={{ fontSize: 13, color: '#64748b', marginTop: 4 }}>{obra.endereco}</p>}
         </div>
+        <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium ${cfg.badge}`}>
+          {cfg.label}
+        </span>
       </div>
 
-      {/* Nav */}
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {navLinks.map((l) => (
+      {/* Nav links */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {[
+          { href: `/obras/${id}/diario`, label: 'Lista de Tarefas', icon: '📋' },
+          { href: `/obras/${id}/cronograma`, label: 'Cronograma', icon: '📅' },
+          { href: `/obras/${id}/relatorios`, label: 'Relatórios', icon: '📊' },
+        ].map((l) => (
           <Link
             key={l.href}
             href={l.href}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 hover:border-orange-300 hover:text-orange-600 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px',
+              background: '#1e293b',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              fontSize: 13, fontWeight: 500, color: '#94a3b8',
+              textDecoration: 'none',
+              transition: 'all 0.15s',
+            }}
           >
             <span>{l.icon}</span>
             {l.label}
@@ -137,54 +134,56 @@ export default async function ObraDashboardPage({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 mb-1">Avanço médio</p>
-          <p className="text-2xl font-bold text-gray-900">{avanco}%</p>
-          <div className="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
-            <div className="h-full bg-orange-500 rounded-full" style={{ width: `${avanco}%` }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 16 }}>
+        <div style={{ ...card, padding: '14px 16px' }}>
+          <p style={{ fontSize: 10, color: '#64748b', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>Avanço</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{avanco}%</p>
+          <div style={{ height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 99, marginTop: 8, overflow: 'hidden' }}>
+            <div style={{ height: '100%', background: '#dc2626', borderRadius: 99, width: `${avanco}%` }} />
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 mb-1">Diários</p>
-          <p className="text-2xl font-bold text-gray-900">{diarios?.length ?? 0}</p>
-          <p className="text-xs text-gray-400 mt-1">registros totais</p>
+        <div style={{ ...card, padding: '14px 16px' }}>
+          <p style={{ fontSize: 10, color: '#64748b', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>Diários</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{diarios?.length ?? 0}</p>
+          <p style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>registros</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 mb-1">HH — últimos 30d</p>
-          <p className="text-2xl font-bold text-gray-900">{totalHH30}</p>
-          <p className="text-xs text-gray-400 mt-1">homem-hora</p>
+        <div style={{ ...card, padding: '14px 16px' }}>
+          <p style={{ fontSize: 10, color: '#64748b', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>HH 30d</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{totalHH30}</p>
+          <p style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>homem-hora</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-xs text-gray-500 mb-1">Dias corridos</p>
-          <p className="text-2xl font-bold text-gray-900">{diasCorridos ?? '—'}</p>
-          <p className="text-xs text-gray-400 mt-1">desde o início</p>
+        <div style={{ ...card, padding: '14px 16px' }}>
+          <p style={{ fontSize: 10, color: '#64748b', marginBottom: 2, textTransform: 'uppercase', letterSpacing: '.06em' }}>Dias</p>
+          <p style={{ fontSize: 24, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{diasCorridos ?? '—'}</p>
+          <p style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>corridos</p>
         </div>
       </div>
 
-      {/* HH por período + Alertas */}
-      <div className="grid md:grid-cols-3 gap-4 mb-4">
-        <div className="md:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-700">HH por dia — últimos 30 dias</h2>
-            <span className="text-xs text-gray-400">{totalHH30} HH total</span>
+      {/* HH chart + Alertas */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div style={{ ...card, padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', margin: 0 }}>HH por dia — últimos 30 dias</h2>
+            <span style={{ fontSize: 11, color: '#475569' }}>{totalHH30} HH total</span>
           </div>
           <HHChart data={hhData} />
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">
+        <div style={{ ...card, padding: 20 }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
             Ocorrências recentes
             {alertasComData.filter(a => a.classe === 'critica').length > 0 && (
-              <span className="ml-2 text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-medium">
                 {alertasComData.filter(a => a.classe === 'critica').length} crítica{alertasComData.filter(a => a.classe === 'critica').length !== 1 ? 's' : ''}
               </span>
             )}
           </h2>
           {alertasComData.length === 0 ? (
-            <p className="text-xs text-gray-400 py-6 text-center">Nenhuma ocorrência crítica ou alerta nos últimos 30 dias</p>
+            <p style={{ fontSize: 12, color: '#475569', padding: '20px 0', textAlign: 'center' }}>
+              Nenhuma ocorrência nos últimos 30 dias
+            </p>
           ) : (
-            <ul className="space-y-2">
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {alertasComData.map((a) => {
                 const ocfg = OCORR_CONFIG[a.classe]
                 return (
@@ -206,36 +205,28 @@ export default async function ObraDashboardPage({
       </div>
 
       {/* Etapas + Info */}
-      <div className="grid md:grid-cols-2 gap-4 mb-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-700">Etapas</h2>
-            <span className="text-xs text-gray-400">{etapas?.length ?? 0} etapa{(etapas?.length ?? 0) !== 1 ? 's' : ''}</span>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div style={{ ...card, padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', margin: 0 }}>Etapas</h2>
+            <span style={{ fontSize: 11, color: '#475569' }}>{etapas?.length ?? 0} etapa{(etapas?.length ?? 0) !== 1 ? 's' : ''}</span>
           </div>
           {!etapas || etapas.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Nenhuma etapa cadastrada.</p>
+            <p style={{ fontSize: 13, color: '#475569', padding: '16px 0', textAlign: 'center' }}>Nenhuma etapa cadastrada.</p>
           ) : (
-            <ul className="space-y-3">
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {etapas.map((e) => (
                 <li key={e.id}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-700 truncate max-w-[60%]">{e.nome}</span>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 flex-shrink-0">
-                      <span className="text-orange-600 font-semibold">{e.percentual_real}%</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 500, color: '#cbd5e1', maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.nome}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#64748b' }}>
+                      <span style={{ color: '#dc2626', fontWeight: 600 }}>{e.percentual_real}%</span>
                       <span>/ {e.percentual_previsto}% prev.</span>
                     </div>
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden relative">
-                    {/* Previsto (fundo) */}
-                    <div
-                      className="absolute h-full bg-gray-200 rounded-full"
-                      style={{ width: `${e.percentual_previsto}%` }}
-                    />
-                    {/* Real */}
-                    <div
-                      className={`absolute h-full rounded-full ${e.percentual_real >= e.percentual_previsto ? 'bg-green-500' : 'bg-orange-500'}`}
-                      style={{ width: `${e.percentual_real}%` }}
-                    />
+                  <div style={{ height: 6, background: 'rgba(255,255,255,0.07)', borderRadius: 99, overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ position: 'absolute', height: '100%', background: 'rgba(255,255,255,0.15)', borderRadius: 99, width: `${e.percentual_previsto}%` }} />
+                    <div style={{ position: 'absolute', height: '100%', background: e.percentual_real >= e.percentual_previsto ? '#22c55e' : '#dc2626', borderRadius: 99, width: `${e.percentual_real}%` }} />
                   </div>
                 </li>
               ))}
@@ -243,53 +234,53 @@ export default async function ObraDashboardPage({
           )}
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Informações</h2>
-          <dl className="space-y-2 text-sm">
+        <div style={{ ...card, padding: 20 }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', marginBottom: 12 }}>Informações</h2>
+          <dl style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {obra.tipo && (
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Tipo</dt>
-                <dd className="font-medium capitalize">{obra.tipo}</dd>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <dt style={{ color: '#64748b' }}>Tipo</dt>
+                <dd style={{ color: '#cbd5e1', fontWeight: 500 }}>{obra.tipo}</dd>
               </div>
             )}
             {obra.responsavel_tecnico && (
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Responsável</dt>
-                <dd className="font-medium">{obra.responsavel_tecnico}</dd>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <dt style={{ color: '#64748b' }}>Responsável</dt>
+                <dd style={{ color: '#cbd5e1', fontWeight: 500 }}>{obra.responsavel_tecnico}</dd>
               </div>
             )}
             {obra.data_inicio && (
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Início</dt>
-                <dd className="font-medium">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <dt style={{ color: '#64748b' }}>Início</dt>
+                <dd style={{ color: '#cbd5e1', fontWeight: 500 }}>
                   {new Date(obra.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR')}
                 </dd>
               </div>
             )}
             {obra.previsao_termino && (
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Previsão término</dt>
-                <dd className="font-medium">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <dt style={{ color: '#64748b' }}>Previsão término</dt>
+                <dd style={{ color: '#cbd5e1', fontWeight: 500 }}>
                   {new Date(obra.previsao_termino + 'T00:00:00').toLocaleDateString('pt-BR')}
                 </dd>
               </div>
             )}
             {obra.art_rrt && (
-              <div className="flex justify-between">
-                <dt className="text-gray-500">ART/RRT</dt>
-                <dd className="font-medium">{obra.art_rrt}</dd>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <dt style={{ color: '#64748b' }}>ART/RRT</dt>
+                <dd style={{ color: '#cbd5e1', fontWeight: 500 }}>{obra.art_rrt}</dd>
               </div>
             )}
             {obra.numero_contrato && (
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Contrato</dt>
-                <dd className="font-medium">{obra.numero_contrato}</dd>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <dt style={{ color: '#64748b' }}>Contrato</dt>
+                <dd style={{ color: '#cbd5e1', fontWeight: 500 }}>{obra.numero_contrato}</dd>
               </div>
             )}
             {diasCorridos !== null && (
-              <div className="flex justify-between">
-                <dt className="text-gray-500">Dias corridos</dt>
-                <dd className="font-medium">{diasCorridos} dias</dd>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <dt style={{ color: '#64748b' }}>Dias corridos</dt>
+                <dd style={{ color: '#cbd5e1', fontWeight: 500 }}>{diasCorridos} dias</dd>
               </div>
             )}
           </dl>
@@ -297,22 +288,22 @@ export default async function ObraDashboardPage({
       </div>
 
       {/* Últimos diários */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-700">Últimos diários</h2>
-          <Link href={`/obras/${id}/diario`} className="text-xs text-orange-500 hover:text-orange-700 font-medium">
-            Ver calendário →
+      <div style={{ ...card, padding: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <h2 style={{ fontSize: 13, fontWeight: 600, color: '#94a3b8', margin: 0 }}>Últimos diários</h2>
+          <Link href={`/obras/${id}/diario`} style={{ fontSize: 12, color: '#dc2626', textDecoration: 'none', fontWeight: 500 }}>
+            Ver lista →
           </Link>
         </div>
         {!diarios || diarios.length === 0 ? (
-          <p className="text-sm text-gray-400 py-4 text-center">Nenhum diário registrado.</p>
+          <p style={{ fontSize: 13, color: '#475569', padding: '16px 0', textAlign: 'center' }}>Nenhum diário registrado.</p>
         ) : (
-          <ul className="divide-y divide-gray-50">
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {diarios.slice(0, 7).map((d) => (
-              <li key={d.id}>
+              <li key={d.id} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <Link
                   href={`/obras/${id}/diario/${d.data}`}
-                  className="flex items-center justify-between text-sm hover:text-orange-600 py-2 transition-colors"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, padding: '8px 0', textDecoration: 'none', color: '#94a3b8' }}
                 >
                   <span>
                     {new Date(d.data + 'T00:00:00').toLocaleDateString('pt-BR', {
@@ -335,7 +326,15 @@ export default async function ObraDashboardPage({
         )}
         <Link
           href={`/obras/${id}/diario/${hoje}`}
-          className="mt-3 flex items-center justify-center w-full py-2 border-2 border-dashed border-orange-200 rounded-lg text-sm text-orange-500 hover:bg-orange-50 transition-colors font-medium"
+          style={{
+            marginTop: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '100%', padding: '10px 0',
+            border: '2px dashed rgba(220,38,38,0.4)',
+            borderRadius: 8,
+            fontSize: 13, color: '#dc2626',
+            textDecoration: 'none', fontWeight: 500,
+          }}
         >
           + Registrar diário de hoje
         </Link>

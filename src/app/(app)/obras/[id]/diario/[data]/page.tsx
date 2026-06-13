@@ -107,17 +107,16 @@ export default async function DiarioDiaPage({
   })
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Breadcrumb */}
+    <div className="p-6">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-400 flex-wrap">
-          <Link href="/obras" className="hover:text-gray-600">Obras</Link>
+          <Link href="/obras" className="hover:text-gray-300">Obras</Link>
           <span>/</span>
-          <Link href={`/obras/${obraId}`} className="hover:text-gray-600">{obra.nome}</Link>
+          <Link href={`/obras/${obraId}`} className="hover:text-gray-300">{obra.nome}</Link>
           <span>/</span>
-          <Link href={`/obras/${obraId}/diario`} className="hover:text-gray-600">Diários</Link>
+          <Link href={`/obras/${obraId}/diario`} className="hover:text-gray-300">Diários</Link>
           <span>/</span>
-          <span className="text-gray-700 font-medium capitalize">{dataBR}</span>
+          <span style={{ color: '#f1f5f9' }} className="capitalize">{dataBR}</span>
         </div>
       </div>
 

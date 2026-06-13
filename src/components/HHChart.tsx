@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -40,7 +40,7 @@ export default function HHChart({ data }: { data: HHData[] }) {
           contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }}
           cursor={{ fill: '#fff7ed' }}
         />
-        <Bar dataKey="hh" fill="#f97316" radius={[3, 3, 0, 0]} maxBarSize={32} />
+        <Bar dataKey="hh" fill="#dc2626" radius={[3, 3, 0, 0]} maxBarSize={32} />
       </BarChart>
     </ResponsiveContainer>
   )

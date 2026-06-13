@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { ObraStatus } from '@/types/supabase'
@@ -58,7 +58,7 @@ export default async function ObrasPage({
           <p className="text-4xl mb-3">🏗️</p>
           <p className="font-medium">Nenhuma obra encontrada</p>
           {isAdmin && (
-            <Link href="/obras/nova" className="mt-4 inline-block text-orange-500 text-sm font-medium">
+            <Link href="/obras/nova" className="mt-4 inline-block text-red-600 text-sm font-medium">
               Criar primeira obra →
             </Link>
           )}
@@ -119,7 +119,8 @@ export default async function ObrasPage({
             <Link
               key={obra.id}
               href={`/obras/${obra.id}`}
-              className="block bg-white rounded-xl border border-gray-200 hover:border-orange-200 hover:shadow-sm transition-all p-5 group"
+              className="block rounded-xl transition-all p-4 group"
+              style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.07)' }}
             >
               <div className="flex items-center justify-between mb-3">
                 <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.badge}`}>
@@ -128,27 +129,27 @@ export default async function ObrasPage({
                 </span>
               </div>
 
-              <h2 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors leading-tight mb-1">
+              <h2 className="font-semibold leading-tight mb-1 transition-colors" style={{ color: '#f1f5f9' }}>
                 {obra.nome}
               </h2>
               {obra.endereco && (
-                <p className="text-xs text-gray-400 mb-3 truncate">{obra.endereco}</p>
+                <p className="text-xs mb-3 truncate" style={{ color: '#475569' }}>{obra.endereco}</p>
               )}
 
               <div className="mb-3">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <div className="flex justify-between text-xs mb-1" style={{ color: '#64748b' }}>
                   <span>Avanço</span>
-                  <span className="font-medium text-gray-700">{avanco}%</span>
+                  <span className="font-medium" style={{ color: '#94a3b8' }}>{avanco}%</span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
                   <div
-                    className="h-full bg-orange-500 rounded-full transition-all"
+                    className="h-full bg-red-600 rounded-full transition-all"
                     style={{ width: `${avanco}%` }}
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-50">
+              <div className="flex items-center justify-between text-xs pt-2" style={{ color: '#475569', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 {dataInicio && <span>Início: {dataInicio}</span>}
                 <span className="ml-auto">Atualizado: {ultima}</span>
               </div>
@@ -163,11 +164,11 @@ export default async function ObrasPage({
 function Header({ isAdmin }: { isAdmin: boolean }) {
   return (
     <div className="flex items-center justify-between mb-6">
-      <h1 className="text-2xl font-bold text-gray-900">Obras</h1>
+      <h1 className="text-2xl font-bold" style={{ color: '#f1f5f9' }}>Obras</h1>
       {isAdmin && (
         <Link
           href="/obras/nova"
-          className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          className="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
         >
           + Nova obra
         </Link>
@@ -193,8 +194,8 @@ function Filtros({ filtroStatus }: { filtroStatus?: string }) {
             href={f.href}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               isActive
-                ? 'bg-orange-500 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'
+                ? 'bg-red-600 text-white'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             {f.label}

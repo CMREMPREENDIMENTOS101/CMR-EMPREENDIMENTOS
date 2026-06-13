@@ -19,40 +19,38 @@ export default function RelatorioDownload({ data, filename }: Props) {
 
   return (
     <div className="mt-6 space-y-4">
-      {/* Resumo */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">Resumo do relatório</h2>
+      <div className="rounded-xl p-5" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <h2 className="text-sm font-semibold mb-3" style={{ color: '#94a3b8' }}>Resumo do relatório</h2>
         <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <dt className="text-xs text-gray-500">Diários</dt>
-            <dd className="text-xl font-bold text-gray-900">{data.diarios.length}</dd>
+            <dt className="text-xs" style={{ color: '#64748b' }}>Diários</dt>
+            <dd className="text-xl font-bold" style={{ color: '#f1f5f9' }}>{data.diarios.length}</dd>
           </div>
           <div>
-            <dt className="text-xs text-gray-500">HH total</dt>
-            <dd className="text-xl font-bold text-gray-900">
+            <dt className="text-xs" style={{ color: '#64748b' }}>HH total</dt>
+            <dd className="text-xl font-bold" style={{ color: '#f1f5f9' }}>
               {data.diarios.reduce((s, d) => s + d.mao_de_obra.reduce((a, r) => a + r.quantidade * r.horas, 0), 0).toFixed(0)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-gray-500">Ocorrências críticas</dt>
-            <dd className="text-xl font-bold text-red-600">
+            <dt className="text-xs" style={{ color: '#64748b' }}>Ocorrências críticas</dt>
+            <dd className="text-xl font-bold text-red-400">
               {data.diarios.reduce((s, d) => s + d.ocorrencias.filter(o => o.classe === 'critica').length, 0)}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-gray-500">Serviços registrados</dt>
-            <dd className="text-xl font-bold text-gray-900">
+            <dt className="text-xs" style={{ color: '#64748b' }}>Serviços registrados</dt>
+            <dd className="text-xl font-bold" style={{ color: '#f1f5f9' }}>
               {data.diarios.reduce((s, d) => s + d.servicos.length, 0)}
             </dd>
           </div>
         </dl>
       </div>
 
-      {/* Botão download */}
       <PDFDownloadLink
         document={<RelatorioPDF data={data} />}
         fileName={filename}
-        className="flex items-center justify-center gap-2 w-full py-4 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors"
+        className="flex items-center justify-center gap-2 w-full py-4 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition-colors"
       >
         {({ loading, error }) =>
           error

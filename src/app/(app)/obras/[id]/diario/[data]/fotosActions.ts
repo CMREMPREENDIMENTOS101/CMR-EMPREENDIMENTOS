@@ -5,7 +5,6 @@ import { createAdminSupabaseClient } from '@/lib/supabase/admin'
 
 const BUCKET = 'diario-fotos'
 
-// Garante que o bucket existe (idempotente)
 export async function ensureBucket() {
   const admin = createAdminSupabaseClient()
   const { error } = await admin.storage.createBucket(BUCKET, {
@@ -49,8 +48,11 @@ export async function deletarFotoDb(fotoId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  // Busca o path antes de deletar para remover do storage
-  const { data: foto } = await supabase.from('diario_fotos').select('storage_path').eq('id', fotoId).single()
+  const { data: foto } = await supabase
+    .from('diario_fotos')
+    .select('storage_path')
+    .eq('id', fotoId)
+    .single()
 
   const { error } = await supabase.from('diario_fotos').delete().eq('id', fotoId)
   if (error) return { error: error.message }

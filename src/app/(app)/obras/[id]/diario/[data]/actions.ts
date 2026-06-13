@@ -48,7 +48,6 @@ export async function salvarDiario(payload: DiarioPayload) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autenticado' }
 
-  // 1. Upsert diário principal
   const { data: diario, error: diarioError } = await supabase
     .from('diarios')
     .upsert(
@@ -74,7 +73,6 @@ export async function salvarDiario(payload: DiarioPayload) {
 
   const diarioId = diario.id
 
-  // 2. Delete + insert filhas (rollback lógico: se falhar, usuário retenvia)
   const [
     { error: e1 },
     { error: e2 },
@@ -93,7 +91,6 @@ export async function salvarDiario(payload: DiarioPayload) {
     return { error: 'Erro ao limpar registros anteriores' }
   }
 
-  // 3. Insert filhas (em paralelo, apenas as não-vazias)
   const inserts: PromiseLike<{ error: unknown }>[] = []
 
   if (payload.mao_de_obra.length > 0) {

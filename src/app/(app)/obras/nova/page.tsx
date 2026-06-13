@@ -59,7 +59,7 @@ export default async function NovaObraPage({
             <input
               name="nome"
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               placeholder="Ex: Residencial Alvorada — Bloco A"
             />
           </div>
@@ -71,7 +71,7 @@ export default async function NovaObraPage({
               </label>
               <select
                 name="tipo"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 <option value="">Selecione</option>
                 <option value="residencial">Residencial</option>
@@ -85,7 +85,7 @@ export default async function NovaObraPage({
               </label>
               <input
                 name="numero_contrato"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
           </div>
@@ -96,7 +96,7 @@ export default async function NovaObraPage({
             </label>
             <input
               name="endereco"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               placeholder="Rua, número, bairro — cidade/UF"
             />
           </div>
@@ -116,7 +116,7 @@ export default async function NovaObraPage({
               <input
                 name="data_inicio"
                 type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
             <div>
@@ -126,7 +126,7 @@ export default async function NovaObraPage({
               <input
                 name="previsao_termino"
                 type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
           </div>
@@ -138,7 +138,7 @@ export default async function NovaObraPage({
               </label>
               <input
                 name="responsavel_tecnico"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 placeholder="Nome do engenheiro"
               />
             </div>
@@ -148,7 +148,7 @@ export default async function NovaObraPage({
               </label>
               <input
                 name="art_rrt"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>
           </div>
@@ -195,7 +195,7 @@ export default async function NovaObraPage({
           </Link>
           <button
             type="submit"
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
           >
             Criar obra
           </button>

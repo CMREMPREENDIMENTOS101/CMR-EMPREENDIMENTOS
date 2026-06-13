@@ -5,7 +5,6 @@ import {
   Document, Page, View, Text, StyleSheet,
 } from '@react-pdf/renderer'
 
-// ─── Tipos ────────────────────────────────────────────────────────────────
 export interface ObraInfo {
   nome: string
   endereco: string | null
@@ -36,37 +35,24 @@ export interface ReportData {
   diarios: DiarioRow[]
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
 const CLIMA_LABEL: Record<string, string> = {
-  sol: 'Sol',
-  nublado: 'Nublado',
-  chuva: 'Chuva',
-  garoa: 'Garoa',
+  sol: 'Sol', nublado: 'Nublado', chuva: 'Chuva', garoa: 'Garoa',
 }
 
 const CLIMA_COND: Record<string, string> = {
-  sol: 'Praticavel',
-  nublado: 'Praticavel',
-  garoa: 'Adverso',
-  chuva: 'Adverso',
+  sol: 'Praticavel', nublado: 'Praticavel', garoa: 'Adverso', chuva: 'Adverso',
 }
 
 const TURNO_LABEL: Record<string, string> = {
-  manha: 'Manha',
-  tarde: 'Tarde',
-  noturno: 'Noturno',
+  manha: 'Manha', tarde: 'Tarde', noturno: 'Noturno',
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  aprovado: 'Aprovado',
-  preenchido: 'Preenchido',
-  rascunho: 'Rascunho',
+  aprovado: 'Aprovado', preenchido: 'Preenchido', rascunho: 'Rascunho',
 }
 
 const CLASSE_LABEL: Record<string, string> = {
-  critica: 'CRITICA',
-  alerta: 'ALERTA',
-  informativa: 'INFORMATIVA',
+  critica: 'CRITICA', alerta: 'ALERTA', informativa: 'INFORMATIVA',
 }
 
 function formatDate(s: string) {
@@ -91,10 +77,9 @@ function calcPrazos(obra: ObraInfo) {
   return { contratual, decorrido, vencer }
 }
 
-// ─── Estilos ──────────────────────────────────────────────────────────────
 const C = {
-  orange: '#f97316',
-  orangeLight: '#fff7ed',
+  orange: '#dc2626',
+  orangeLight: '#fef2f2',
   blue: '#1e3a5f',
   gray50: '#f9fafb',
   gray100: '#f3f4f6',
@@ -110,67 +95,33 @@ const C = {
 
 const s = StyleSheet.create({
   page: {
-    paddingTop: 28,
-    paddingBottom: 36,
-    paddingHorizontal: 28,
-    fontFamily: 'Helvetica',
-    fontSize: 8,
-    color: C.gray900,
+    paddingTop: 28, paddingBottom: 36, paddingHorizontal: 28,
+    fontFamily: 'Helvetica', fontSize: 8, color: C.gray900,
   },
-  // ─ tabela genérica (borda externa esq+topo, células fecham bot+dir)
   table: {
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderColor: C.border,
-    borderStyle: 'solid',
-    marginBottom: 7,
+    borderTopWidth: 1, borderLeftWidth: 1, borderColor: C.border,
+    borderStyle: 'solid', marginBottom: 7,
   },
   row: { flexDirection: 'row' },
   cell: {
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: C.border,
-    borderStyle: 'solid',
-    padding: 4,
+    borderRightWidth: 1, borderBottomWidth: 1, borderColor: C.border,
+    borderStyle: 'solid', padding: 4,
   },
-  // ─ texto
   bold: { fontFamily: 'Helvetica-Bold' },
   label: { fontFamily: 'Helvetica-Bold', color: C.gray700, fontSize: 7 },
   value: { color: C.gray900 },
   center: { textAlign: 'center' },
   right: { textAlign: 'right' },
-  // ─ cabeçalho do bloco de seção
-  secHeader: {
-    backgroundColor: C.gray100,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 8,
-  },
-  // ─ cabeçalho de colunas (linha de th)
-  colHeader: {
-    backgroundColor: C.gray50,
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 7,
-    color: C.gray700,
-  },
-  // ─ rodapé da página
+  secHeader: { backgroundColor: C.gray100, fontFamily: 'Helvetica-Bold', fontSize: 8 },
+  colHeader: { backgroundColor: C.gray50, fontFamily: 'Helvetica-Bold', fontSize: 7, color: C.gray700 },
   footer: {
-    position: 'absolute',
-    bottom: 16,
-    left: 28,
-    right: 28,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderColor: C.gray200,
-    paddingTop: 4,
+    position: 'absolute', bottom: 16, left: 28, right: 28,
+    flexDirection: 'row', justifyContent: 'space-between',
+    borderTopWidth: 1, borderColor: C.gray200, paddingTop: 4,
   },
-  footerText: {
-    fontSize: 7,
-    color: C.gray400,
-  },
+  footerText: { fontSize: 7, color: C.gray400 },
 })
 
-// ─── Componentes de tabela ────────────────────────────────────────────────
 function Cell({
   children, flex, w, style, bold, center, right, bg, label,
 }: {
@@ -209,7 +160,6 @@ function Row({ children }: { children: React.ReactNode }) {
   return <View style={s.row}>{children}</View>
 }
 
-// ─── Cabeçalho do RDO ────────────────────────────────────────────────────
 function HeaderTable({ obra, diario, reportNum, prazos }: {
   obra: ObraInfo
   diario: DiarioRow
@@ -218,21 +168,15 @@ function HeaderTable({ obra, diario, reportNum, prazos }: {
 }) {
   return (
     <View style={s.table}>
-      {/* Linha 1: marca | título | metadados */}
       <Row>
-        {/* Coluna marca */}
         <View style={[s.cell, { width: 110, backgroundColor: C.blue, justifyContent: 'center', alignItems: 'center', paddingVertical: 10 }]}>
           <Text style={[s.bold, { color: C.white, fontSize: 13, letterSpacing: 1 }]}>CMR</Text>
           <Text style={{ color: '#93c5fd', fontSize: 7, marginTop: 2 }}>Empreendimentos</Text>
         </View>
-
-        {/* Título central */}
         <View style={[s.cell, { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 10 }]}>
           <Text style={[s.bold, { fontSize: 11, color: C.gray900 }]}>Relatorio Diario de Obra</Text>
           <Text style={{ fontSize: 9, color: C.orange, marginTop: 3, fontFamily: 'Helvetica-Bold' }}>RDO</Text>
         </View>
-
-        {/* Metadados */}
         <View style={[s.cell, { width: 120, padding: 0 }]}>
           <View style={[s.row, { borderBottomWidth: 1, borderColor: C.border }]}>
             <View style={{ flex: 1, padding: 3, borderRightWidth: 1, borderColor: C.border }}><Text style={s.label}>Relatorio n{'º'}</Text></View>
@@ -252,24 +196,18 @@ function HeaderTable({ obra, diario, reportNum, prazos }: {
           </View>
         </View>
       </Row>
-
-      {/* Linha 2: Obra + prazo contratual */}
       <Row>
         <Cell w={80} bg={C.gray50} label>Obra</Cell>
         <Cell flex={1}>{obra.nome}</Cell>
         <Cell w={100} bg={C.gray50} label>Prazo contratual</Cell>
         <Cell w={60} right>{prazos.contratual !== null ? `${prazos.contratual} dias` : '—'}</Cell>
       </Row>
-
-      {/* Linha 3: Endereço + prazo decorrido */}
       <Row>
         <Cell w={80} bg={C.gray50} label>Endereco</Cell>
         <Cell flex={1}>{obra.endereco || '—'}</Cell>
         <Cell w={100} bg={C.gray50} label>Prazo decorrido</Cell>
         <Cell w={60} right>{prazos.decorrido} dias</Cell>
       </Row>
-
-      {/* Linha 4: Responsável + art_rrt + prazo a vencer */}
       <Row>
         <Cell w={80} bg={C.gray50} label>Responsavel</Cell>
         <Cell flex={1}>{obra.responsavel_tecnico || '—'}</Cell>
@@ -278,8 +216,6 @@ function HeaderTable({ obra, diario, reportNum, prazos }: {
         <Cell w={100} bg={C.gray50} label>Prazo a vencer</Cell>
         <Cell w={60} right>{prazos.vencer !== null ? `${prazos.vencer} dias` : '—'}</Cell>
       </Row>
-
-      {/* Linha 5: Turno + status */}
       <Row>
         <Cell w={80} bg={C.gray50} label>Turno</Cell>
         <Cell flex={1}>{diario.turno ? TURNO_LABEL[diario.turno] ?? diario.turno : '—'}</Cell>
@@ -292,11 +228,9 @@ function HeaderTable({ obra, diario, reportNum, prazos }: {
   )
 }
 
-// ─── Seção: Clima ─────────────────────────────────────────────────────────
 function ClimaTable({ diario }: { diario: DiarioRow }) {
   return (
     <View style={s.table}>
-      {/* Header cols */}
       <Row>
         <Cell w={80} bg={C.gray100} bold>Clima</Cell>
         <Cell flex={1} bg={C.gray100} bold>Tempo</Cell>
@@ -316,14 +250,11 @@ function ClimaTable({ diario }: { diario: DiarioRow }) {
   )
 }
 
-// ─── Seção: Mão de Obra ───────────────────────────────────────────────────
 function MdoTable({ rows }: { rows: DiarioRow['mao_de_obra'] }) {
   const totalHH = rows.reduce((s, r) => s + r.quantidade * r.horas, 0)
   return (
     <View style={s.table}>
-      <Row>
-        <Cell flex={1} bg={C.gray100} bold>Mao de Obra ({rows.length})</Cell>
-      </Row>
+      <Row><Cell flex={1} bg={C.gray100} bold>Mao de Obra ({rows.length})</Cell></Row>
       {rows.length === 0 ? (
         <Row><Cell flex={1} style={{ color: C.gray400 }}>Nenhum registro</Cell></Row>
       ) : (
@@ -357,13 +288,10 @@ function MdoTable({ rows }: { rows: DiarioRow['mao_de_obra'] }) {
   )
 }
 
-// ─── Seção: Equipamentos ─────────────────────────────────────────────────
 function EquipTable({ rows }: { rows: DiarioRow['equipamentos'] }) {
   return (
     <View style={s.table}>
-      <Row>
-        <Cell flex={1} bg={C.gray100} bold>Equipamentos ({rows.length})</Cell>
-      </Row>
+      <Row><Cell flex={1} bg={C.gray100} bold>Equipamentos ({rows.length})</Cell></Row>
       {rows.length === 0 ? (
         <Row><Cell flex={1} style={{ color: C.gray400 }}>Nenhum registro</Cell></Row>
       ) : (
@@ -386,13 +314,10 @@ function EquipTable({ rows }: { rows: DiarioRow['equipamentos'] }) {
   )
 }
 
-// ─── Seção: Serviços / Atividades ─────────────────────────────────────────
 function ServicosTable({ rows }: { rows: DiarioRow['servicos'] }) {
   return (
     <View style={s.table}>
-      <Row>
-        <Cell flex={1} bg={C.gray100} bold>Atividades / Servicos Executados ({rows.length})</Cell>
-      </Row>
+      <Row><Cell flex={1} bg={C.gray100} bold>Atividades / Servicos Executados ({rows.length})</Cell></Row>
       {rows.length === 0 ? (
         <Row><Cell flex={1} style={{ color: C.gray400 }}>Nenhum registro</Cell></Row>
       ) : (
@@ -417,13 +342,10 @@ function ServicosTable({ rows }: { rows: DiarioRow['servicos'] }) {
   )
 }
 
-// ─── Seção: Materiais ────────────────────────────────────────────────────
 function MateriaisTable({ rows }: { rows: DiarioRow['materiais'] }) {
   return (
     <View style={s.table}>
-      <Row>
-        <Cell flex={1} bg={C.gray100} bold>Materiais Recebidos ({rows.length})</Cell>
-      </Row>
+      <Row><Cell flex={1} bg={C.gray100} bold>Materiais Recebidos ({rows.length})</Cell></Row>
       {rows.length === 0 ? (
         <Row><Cell flex={1} style={{ color: C.gray400 }}>Nenhum registro</Cell></Row>
       ) : (
@@ -450,13 +372,10 @@ function MateriaisTable({ rows }: { rows: DiarioRow['materiais'] }) {
   )
 }
 
-// ─── Seção: Ocorrências ───────────────────────────────────────────────────
 function OcorrenciasTable({ rows }: { rows: DiarioRow['ocorrencias'] }) {
   return (
     <View style={s.table}>
-      <Row>
-        <Cell flex={1} bg={C.gray100} bold>Ocorrencias ({rows.length})</Cell>
-      </Row>
+      <Row><Cell flex={1} bg={C.gray100} bold>Ocorrencias ({rows.length})</Cell></Row>
       {rows.length === 0 ? (
         <Row><Cell flex={1} style={{ color: C.gray400 }}>Nenhuma ocorrencia</Cell></Row>
       ) : (
@@ -473,21 +392,15 @@ function OcorrenciasTable({ rows }: { rows: DiarioRow['ocorrencias'] }) {
   )
 }
 
-// ─── Seção: Observações ───────────────────────────────────────────────────
 function ObsBlock({ text }: { text: string }) {
   return (
     <View style={s.table}>
-      <Row>
-        <Cell flex={1} bg={C.gray100} bold>Observacoes</Cell>
-      </Row>
-      <Row>
-        <Cell flex={1}>{text}</Cell>
-      </Row>
+      <Row><Cell flex={1} bg={C.gray100} bold>Observacoes</Cell></Row>
+      <Row><Cell flex={1}>{text}</Cell></Row>
     </View>
   )
 }
 
-// ─── Um diário completo (uma "página lógica" do RDO) ─────────────────────
 function RdoDiario({
   diario, obra, reportNum, prazos, isFirst,
 }: {
@@ -499,13 +412,11 @@ function RdoDiario({
 }) {
   return (
     <View break={!isFirst}>
-      {/* Subtítulo da data */}
       <View style={{ backgroundColor: C.orange, paddingHorizontal: 6, paddingVertical: 3, marginBottom: 5 }}>
         <Text style={[s.bold, { color: C.white, fontSize: 8, textTransform: 'uppercase' }]}>
           {formatDateLong(diario.data)}
         </Text>
       </View>
-
       <HeaderTable obra={obra} diario={diario} reportNum={reportNum} prazos={prazos} />
       <ClimaTable diario={diario} />
       <MdoTable rows={diario.mao_de_obra} />
@@ -518,7 +429,6 @@ function RdoDiario({
   )
 }
 
-// ─── Documento PDF principal ──────────────────────────────────────────────
 export default function RelatorioPDF({ data }: { data: ReportData }) {
   const prazos = calcPrazos(data.obra)
   const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -546,8 +456,6 @@ export default function RelatorioPDF({ data }: { data: ReportData }) {
             />
           ))
         )}
-
-        {/* Rodapé */}
         <View style={s.footer} fixed>
           <Text style={s.footerText}>CMR Empreendimentos — {data.obra.nome}</Text>
           <Text style={s.footerText}>Gerado em {now}</Text>
