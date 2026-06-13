@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Sidebar from '@/components/Sidebar'
+import AppShell from '@/components/AppShell'
 
 export default async function AppLayout({
   children,
@@ -13,20 +13,32 @@ export default async function AppLayout({
 
   const { data: usuario } = await supabase
     .from('usuarios')
-    .select('nome, perfil')
+    .select('nome, perfil, empresa_id')
     .eq('id', user.id)
     .single()
 
   if (!usuario) redirect('/login')
 
-  return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar nome={usuario.nome} perfil={usuario.perfil} />
+  let logoUrl: string | null = null
+  if (usuario.empresa_id) {
+    const { data: empresa } = await supabase
+      .from('empresas')
+      .select('logo_url')
+      .eq('id', usuario.empresa_id)
+      .single()
+    logoUrl = empresa?.logo_url ?? null
+  } else {
+    const { data: empresa } = await supabase
+      .from('empresas')
+      .select('logo_url')
+      .limit(1)
+      .maybeSingle()
+    logoUrl = empresa?.logo_url ?? null
+  }
 
-      {/* Conteúdo principal — offset pela sidebar no desktop */}
-      <main className="flex-1 md:ml-56 pb-16 md:pb-0 min-w-0">
-        {children}
-      </main>
-    </div>
+  return (
+    <AppShell nome={usuario.nome} perfil={usuario.perfil} logoUrl={logoUrl}>
+      {children}
+    </AppShell>
   )
 }

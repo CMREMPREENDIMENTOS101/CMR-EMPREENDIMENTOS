@@ -1,34 +1,23 @@
+const S = ({ w, h = 14, r = 8 }: { w: number | string; h?: number; r?: number }) => (
+  <div style={{ width: w, height: h, borderRadius: r, background: 'rgba(255,255,255,0.06)' }} />
+)
+
 export default function DiarioFormLoading() {
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto animate-pulse space-y-4">
-      {/* Breadcrumb */}
-      <div className="h-4 w-64 bg-gray-200 rounded" />
-
-      {/* Título */}
-      <div className="flex items-center justify-between">
-        <div className="h-6 w-48 bg-gray-200 rounded-lg" />
-        <div className="h-6 w-20 bg-gray-100 rounded-full" />
+    <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <S w={200} h={22} />
+        <S w={80} h={22} r={99} />
       </div>
-
-      {/* Sections */}
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          {/* Section header */}
-          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div className="h-4 w-32 bg-gray-200 rounded" />
-            <div className="h-4 w-4 bg-gray-100 rounded" />
-          </div>
-          {/* Section body */}
-          <div className="px-5 py-4 space-y-3">
-            <div className="h-4 w-full bg-gray-100 rounded" />
-            <div className="h-4 w-3/4 bg-gray-100 rounded" />
-            {i < 2 && <div className="h-4 w-1/2 bg-gray-100 rounded" />}
-          </div>
+        <div key={i} style={{ background: '#1e293b', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <S w={120} h={11} />
+          <S w="100%" h={14} />
+          <S w="75%" h={14} />
+          {i < 2 && <S w="50%" h={14} />}
         </div>
       ))}
-
-      {/* Save button */}
-      <div className="h-10 w-full bg-gray-200 rounded-lg" />
+      <S w="100%" h={42} r={10} />
     </div>
   )
 }

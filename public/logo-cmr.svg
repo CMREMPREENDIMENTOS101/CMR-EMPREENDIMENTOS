@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <!-- Fundo -->
+  <rect width="240" height="240" fill="#0f172a"/>
+
+  <!-- Telhado / house shape -->
+  <polyline points="40,140 120,60 200,140" fill="none" stroke="white" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- Acento vermelho escuro no M (pico central) -->
+  <polyline points="120,60 120,110" fill="none" stroke="#8b1c1c" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- C - arco esquerdo -->
+  <path d="M 95,105 A 45,45 0 1,0 95,175" fill="none" stroke="white" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- R - direita -->
+  <line x1="152" y1="105" x2="152" y2="175" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <path d="M 152,105 Q 190,105 190,130 Q 190,155 152,155" fill="none" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <line x1="167" y1="155" x2="190" y2="175" stroke="white" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Texto EMPREENDIMENTOS -->
+  <text x="120" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="white" letter-spacing="3">EMPREENDIMENTOS</text>
+</svg>

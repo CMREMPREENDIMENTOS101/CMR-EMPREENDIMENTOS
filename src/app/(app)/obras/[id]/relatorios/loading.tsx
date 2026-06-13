@@ -1,38 +1,31 @@
+const S = ({ w, h = 14, r = 8 }: { w: number | string; h?: number; r?: number }) => (
+  <div style={{ width: w, height: h, borderRadius: r, background: 'rgba(255,255,255,0.06)' }} />
+)
+
 export default function RelatoriosLoading() {
   return (
-    <div className="p-6 max-w-3xl mx-auto animate-pulse space-y-6">
-      {/* Breadcrumb */}
-      <div className="h-4 w-56 bg-gray-200 rounded" />
-
-      {/* Título */}
-      <div className="space-y-1">
-        <div className="h-6 w-64 bg-gray-200 rounded-lg" />
-        <div className="h-4 w-48 bg-gray-100 rounded" />
+    <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <S w={220} h={22} />
+        <S w={160} h={14} />
       </div>
-
-      {/* Date form */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-        <div className="h-4 w-32 bg-gray-200 rounded" />
-        <div className="flex gap-3">
-          <div className="flex-1 h-9 bg-gray-100 rounded-lg" />
-          <div className="flex-1 h-9 bg-gray-100 rounded-lg" />
-          <div className="h-9 w-32 bg-gray-200 rounded-lg" />
-        </div>
+      {/* Filtros */}
+      <div style={{ background: '#1e293b', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px', display: 'flex', gap: 12 }}>
+        <S w="100%" h={36} r={8} />
+        <S w="100%" h={36} r={8} />
+        <S w={120} h={36} r={8} />
       </div>
-
-      {/* Diary list */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100">
-          <div className="h-4 w-36 bg-gray-200 rounded" />
+      {/* Tabela */}
+      <div style={{ background: '#1e293b', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <S w={140} h={14} />
         </div>
-        <ul>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <li key={i} className="flex items-center justify-between px-5 py-2.5 border-b border-gray-50">
-              <div className="h-4 w-40 bg-gray-100 rounded" />
-              <div className="h-5 w-16 bg-gray-100 rounded-full" />
-            </li>
-          ))}
-        </ul>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <S w={160} h={14} />
+            <S w={64} h={22} r={99} />
+          </div>
+        ))}
       </div>
     </div>
   )

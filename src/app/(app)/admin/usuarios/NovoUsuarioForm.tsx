@@ -6,29 +6,49 @@ import { criarUsuario } from './actions'
 export default function NovoUsuarioForm() {
   const [open, setOpen] = useState(false)
   const [erro, setErro] = useState('')
+  const [aviso, setAviso] = useState('')
   const [isPending, startTransition] = useTransition()
+  const [enviado, setEnviado] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     setErro('')
+    setAviso('')
     startTransition(async () => {
       const res = await criarUsuario(formData)
       if (res?.error) {
         setErro(res.error)
+      } else if (res?.aviso) {
+        setAviso(res.aviso)
+        formRef.current?.reset()
       } else {
-        setOpen(false)
+        setEnviado(true)
         formRef.current?.reset()
       }
     })
   }
 
+  function handleFechar() {
+    setOpen(false)
+    setErro('')
+    setAviso('')
+    setEnviado(false)
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 14,
+    background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)',
+    color: '#e2e8f0', outline: 'none', boxSizing: 'border-box' as const,
+  }
+  const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 4 }
+
   if (!open) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+        style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
       >
         + Novo usuário
       </button>
@@ -36,85 +56,74 @@ export default function NovoUsuarioForm() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Novo usuário</h2>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+      <div style={{ background: '#1e293b', borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)', width: '100%', maxWidth: 440, padding: 24 }}>
 
-        {erro && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-            {erro}
+        {enviado ? (
+          <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>✉️</div>
+            <h2 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Usuário criado!</h2>
+            <p style={{ margin: '0 0 24px', fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>
+              E-mail enviado com as credenciais de acesso e senha provisória.
+            </p>
+            <button onClick={handleFechar} style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+              Fechar
+            </button>
           </div>
+        ) : (
+          <>
+            <h2 style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Novo usuário</h2>
+            <p style={{ margin: '0 0 20px', fontSize: 12, color: '#475569' }}>
+              Uma senha provisória será gerada e enviada por e-mail automaticamente.
+            </p>
+
+            {erro && (
+              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, fontSize: 13, color: '#f87171' }}>
+                {erro}
+              </div>
+            )}
+
+            {aviso && (
+              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', borderRadius: 8, fontSize: 13, color: '#fbbf24', lineHeight: 1.6 }}>
+                {aviso}
+                <button onClick={handleFechar} style={{ display: 'block', marginTop: 8, fontSize: 12, color: '#94a3b8', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  Fechar
+                </button>
+              </div>
+            )}
+
+            {!aviso && (
+              <form ref={formRef} onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <label style={labelStyle}>Nome completo</label>
+                  <input name="nome" required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>E-mail</label>
+                  <input name="email" type="email" required style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Perfil</label>
+                  <select name="perfil" required style={inputStyle}>
+                    <option value="encarregado">Encarregado</option>
+                    <option value="engenheiro">Engenheiro</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
+                  <button type="button" onClick={handleFechar}
+                    style={{ flex: 1, border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', background: 'transparent', borderRadius: 8, padding: '9px 0', fontSize: 14, cursor: 'pointer' }}>
+                    Cancelar
+                  </button>
+                  <button type="submit" disabled={isPending}
+                    style={{ flex: 1, background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: isPending ? 0.6 : 1 }}>
+                    {isPending ? 'Criando...' : 'Criar usuário'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </>
         )}
-
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nome completo
-            </label>
-            <input
-              name="nome"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              E-mail
-            </label>
-            <input
-              name="email"
-              type="email"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Senha provisória
-            </label>
-            <input
-              name="senha"
-              type="password"
-              required
-              minLength={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Perfil
-            </label>
-            <select
-              name="perfil"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            >
-              <option value="encarregado">Encarregado</option>
-              <option value="engenheiro">Engenheiro</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => { setOpen(false); setErro('') }}
-              className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-sm font-semibold py-2 rounded-lg transition-colors"
-            >
-              {isPending ? 'Criando...' : 'Criar usuário'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   )

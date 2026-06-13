@@ -4,12 +4,6 @@ import { useState, useTransition } from 'react'
 import { atualizarUsuario } from './actions'
 import type { Usuario } from '@/types/supabase'
 
-const PERFIL_LABEL: Record<string, string> = {
-  admin: 'Admin',
-  engenheiro: 'Engenheiro',
-  encarregado: 'Encarregado',
-}
-
 export default function EditarUsuarioForm({ usuario }: { usuario: Usuario }) {
   const [open, setOpen] = useState(false)
   const [erro, setErro] = useState('')
@@ -26,63 +20,49 @@ export default function EditarUsuarioForm({ usuario }: { usuario: Usuario }) {
     })
   }
 
+  const inputStyle = {
+    width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 14,
+    background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)',
+    color: '#e2e8f0', outline: 'none',
+  }
+  const labelStyle = { display: 'block', fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 4 }
+
   return (
     <>
       <button
         onClick={() => setOpen(true)}
-        className="text-orange-500 hover:text-orange-700 text-sm font-medium"
+        style={{ fontSize: 12, color: '#94a3b8', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer' }}
       >
         Editar
       </button>
 
       {open && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
-              Editar usuário
-            </h2>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
+          <div style={{ background: '#1e293b', borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)', width: '100%', maxWidth: 440, padding: 24 }}>
+            <h2 style={{ margin: '0 0 20px', fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>Editar usuário</h2>
 
             {erro && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(220,38,38,0.12)', border: '1px solid rgba(220,38,38,0.3)', borderRadius: 8, fontSize: 13, color: '#f87171' }}>
                 {erro}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <input type="hidden" name="id" value={usuario.id} />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome completo
-                </label>
-                <input
-                  name="nome"
-                  defaultValue={usuario.nome}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+                <label style={labelStyle}>Nome completo</label>
+                <input name="nome" defaultValue={usuario.nome} required style={inputStyle} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  E-mail
-                </label>
-                <input
-                  value={usuario.email}
-                  disabled
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-500"
-                />
+                <label style={labelStyle}>E-mail</label>
+                <input value={usuario.email} disabled style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Perfil
-                </label>
-                <select
-                  name="perfil"
-                  defaultValue={usuario.perfil}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
+                <label style={labelStyle}>Perfil</label>
+                <select name="perfil" defaultValue={usuario.perfil} style={inputStyle}>
                   <option value="encarregado">Encarregado</option>
                   <option value="engenheiro">Engenheiro</option>
                   <option value="admin">Admin</option>
@@ -90,31 +70,25 @@ export default function EditarUsuarioForm({ usuario }: { usuario: Usuario }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  name="ativo"
-                  defaultValue={usuario.ativo ? 'true' : 'false'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
+                <label style={labelStyle}>Status</label>
+                <select name="ativo" defaultValue={usuario.ativo ? 'true' : 'false'} style={inputStyle}>
                   <option value="true">Ativo</option>
                   <option value="false">Desativado</option>
                 </select>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
                 <button
                   type="button"
                   onClick={() => { setOpen(false); setErro('') }}
-                  className="flex-1 border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-lg hover:bg-gray-50"
+                  style={{ flex: 1, border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', background: 'transparent', borderRadius: 8, padding: '9px 0', fontSize: 14, cursor: 'pointer' }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-sm font-semibold py-2 rounded-lg"
+                  style={{ flex: 1, background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', opacity: isPending ? 0.6 : 1 }}
                 >
                   {isPending ? 'Salvando...' : 'Salvar'}
                 </button>
