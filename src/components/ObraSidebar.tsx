@@ -9,13 +9,17 @@ interface Props {
   obraId: string
   obraNome: string
   totalRelatorios: number
+  totalEtapas: number
   logoUrl?: string | null
   isAdmin?: boolean
+  diarioHoje: string
 }
 
-export default function ObraSidebar({ obraId, obraNome, totalRelatorios, logoUrl, isAdmin = false }: Props) {
+export default function ObraSidebar({
+  obraId, obraNome, totalRelatorios, totalEtapas, logoUrl, isAdmin = false, diarioHoje,
+}: Props) {
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
 
   const [pendingHref, setPendingHref] = useState<string | null>(null)
   const [modalOpen, setModalOpen]     = useState(false)
@@ -23,13 +27,15 @@ export default function ObraSidebar({ obraId, obraNome, totalRelatorios, logoUrl
   const [currentLogo, setCurrentLogo] = useState<string | null>(logoUrl ?? null)
 
   const isVisaoGeral = pathname === `/obras/${obraId}`
-  const isRelatorios = pathname.startsWith(`/obras/${obraId}/relatorios`)
+  const isCronograma = pathname.startsWith(`/obras/${obraId}/cronograma`)
   const isDiario     = pathname.startsWith(`/obras/${obraId}/diario`)
+  const isRelatorios = pathname.startsWith(`/obras/${obraId}/relatorios`)
 
   const items = [
-    { href: `/obras/${obraId}`,            label: 'Visão geral',      icon: 'grid_view',     count: null,            active: isVisaoGeral },
-    { href: `/obras/${obraId}/diario`,     label: 'Lista de tarefas', icon: 'list_alt',      count: null,            active: isDiario     },
-    { href: `/obras/${obraId}/relatorios`, label: 'Relatórios',       icon: 'content_paste', count: totalRelatorios, active: isRelatorios },
+    { href: `/obras/${obraId}`,            label: 'Visão geral',     icon: 'grid_view',     count: null,            active: isVisaoGeral },
+    { href: `/obras/${obraId}/cronograma`, label: 'Lista de tarefas',icon: 'checklist',     count: totalEtapas,     active: isCronograma },
+    { href: `/obras/${obraId}/diario`,     label: 'Diário de obras', icon: 'calendar_today',count: totalRelatorios, active: isDiario     },
+    { href: `/obras/${obraId}/relatorios`, label: 'Relatórios',      icon: 'description',   count: null,            active: isRelatorios },
   ]
 
   function handleNav(href: string) {
@@ -41,16 +47,43 @@ export default function ObraSidebar({ obraId, obraNome, totalRelatorios, logoUrl
     <>
       <aside style={{
         width: 260, minWidth: 260,
-        background: '#0f172a',
-        borderRight: '1px solid rgba(255,255,255,0.07)',
+        background: '#fff',
+        borderRight: '1px solid #e5e7eb',
         display: 'flex', flexDirection: 'column',
+        height: '100vh',
+        position: 'sticky', top: 0,
+        overflowY: 'auto',
       }}>
-        {/* Logo — clicável para admins */}
+
+        {/* Back + obra name */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '14px 16px',
+          borderBottom: '1px solid #f3f4f6',
+        }}>
+          <Link
+            href="/obras"
+            style={{ display: 'flex', alignItems: 'center', color: '#9ca3af', textDecoration: 'none', flexShrink: 0 }}
+          >
+            <i className="material-icons" style={{ fontSize: 20 }}>arrow_back</i>
+          </Link>
+          <span style={{
+            fontSize: 13, fontWeight: 600, color: '#111827', lineHeight: 1.35,
+            overflow: 'hidden',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+          }}>
+            {obraNome}
+          </span>
+        </div>
+
+        {/* Logo */}
         <div
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: '12px 16px', minHeight: 150,
-            borderBottom: '1px solid rgba(255,255,255,0.07)',
+            padding: '16px', minHeight: 120,
+            borderBottom: '1px solid #f3f4f6',
             position: 'relative',
             cursor: isAdmin ? 'pointer' : 'default',
           }}
@@ -63,23 +96,20 @@ export default function ObraSidebar({ obraId, obraNome, totalRelatorios, logoUrl
             src={currentLogo ?? '/logo-cmr.svg'}
             alt="CMR Empreendimentos"
             style={{
-              maxHeight: 120, maxWidth: 230, objectFit: 'contain',
+              maxHeight: 88, maxWidth: 210, objectFit: 'contain',
+              opacity: hovering ? 0.3 : 1,
               transition: 'opacity 0.2s',
-              opacity: hovering ? 0.35 : 1,
             }}
           />
-
           {isAdmin && (
             <div style={{
               position: 'absolute', inset: 0,
               display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: 4,
-              opacity: hovering ? 1 : 0,
-              transition: 'opacity 0.2s',
+              alignItems: 'center', justifyContent: 'center', gap: 4,
+              opacity: hovering ? 1 : 0, transition: 'opacity 0.2s',
               pointerEvents: 'none',
             }}>
-              <i className="material-icons" style={{ fontSize: 24, color: '#dc2626' }}>photo_camera</i>
+              <i className="material-icons" style={{ fontSize: 22, color: '#dc2626' }}>photo_camera</i>
               <span style={{ fontSize: 10, color: '#dc2626', fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase' }}>
                 Alterar logo
               </span>
@@ -87,51 +117,36 @@ export default function ObraSidebar({ obraId, obraNome, totalRelatorios, logoUrl
           )}
         </div>
 
-        {/* Nome da obra */}
-        <div style={{
-          margin: '10px 12px 0',
-          padding: '10px 12px',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 6, textAlign: 'center',
-        }}>
-          <span style={{ fontSize: 12, color: '#94a3b8', fontWeight: 600, lineHeight: 1.4, display: 'block' }}>
-            {obraNome}
-          </span>
-        </div>
-
         {/* Nav */}
-        <nav style={{ paddingTop: 8 }}>
+        <nav style={{ padding: '6px 0', flex: 1 }}>
           {items.map((item) => {
             const isPending = pendingHref === item.href && !item.active
             const isActive  = item.active || isPending
-
             return (
               <button
                 key={item.label}
                 onClick={() => handleNav(item.href)}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  width: '100%', padding: '11px 16px',
-                  background: isActive ? 'rgba(220,38,38,0.12)' : 'transparent',
-                  boxShadow: isActive ? 'inset 3px 0 0 #dc2626' : 'inset 3px 0 0 transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'background 0.15s, box-shadow 0.15s',
+                  width: '100%', padding: '10px 16px',
+                  background: isActive ? '#eff6ff' : 'transparent',
+                  border: 'none', cursor: 'pointer', textAlign: 'left',
+                  transition: 'background 0.15s',
                 }}
               >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: isActive ? '#f1f5f9' : '#64748b' }}>
-                  <i className="material-icons" style={{ fontSize: 18, color: isActive ? '#dc2626' : '#475569' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14, color: isActive ? '#1d4ed8' : '#6b7280' }}>
+                  <i className="material-icons" style={{ fontSize: 18, color: isActive ? '#2563eb' : '#9ca3af' }}>
                     {item.icon}
                   </i>
                   {item.label}
                 </span>
-                {item.count !== null && (
+                {item.count !== null && item.count > 0 && (
                   <span style={{
-                    background: isActive ? '#dc2626' : 'rgba(255,255,255,0.08)',
-                    color: isActive ? '#fff' : '#94a3b8',
-                    borderRadius: 10, padding: '1px 8px', fontSize: 11,
+                    background: isActive ? '#2563eb' : '#e5e7eb',
+                    color: isActive ? '#fff' : '#6b7280',
+                    borderRadius: 10, padding: '1px 8px',
+                    fontSize: 11, fontWeight: 600,
+                    minWidth: 20, textAlign: 'center',
                   }}>
                     {item.count}
                   </span>
@@ -140,6 +155,23 @@ export default function ObraSidebar({ obraId, obraNome, totalRelatorios, logoUrl
             )
           })}
         </nav>
+
+        {/* Novo Relatório */}
+        <div style={{ padding: '12px 16px', borderTop: '1px solid #f3f4f6' }}>
+          <Link
+            href={`/obras/${obraId}/diario/${diarioHoje}`}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              padding: '10px 16px',
+              background: '#dc2626', color: '#fff',
+              borderRadius: 8, textDecoration: 'none',
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            <i className="material-icons" style={{ fontSize: 18 }}>add</i>
+            Novo Relatório
+          </Link>
+        </div>
       </aside>
 
       <LogoUploadModal
