@@ -70,15 +70,15 @@ function parentPct(etapas: Etapa[], id: string): number {
 // ─── progress bar ─────────────────────────────────────────────────────────────
 
 function ProgressBar({ pct, isSelected }: { pct: number; isSelected: boolean }) {
-  const color = pct >= 100 ? '#22c55e' : pct > 0 ? '#f97316' : '#d1d5db'
-  const textColor = isSelected ? '#3b82f6' : pct >= 100 ? '#6b7280' : pct > 0 ? '#6b7280' : '#9ca3af'
+  const color = pct >= 100 ? '#4cd965' : pct > 0 ? '#ff9500' : '#e5e7eb'
+  const textColor = isSelected ? '#3b82f6' : '#4b5563'
 
   return (
-    <div style={{ minWidth: 140 }}>
-      <div style={{ fontSize: 12, color: textColor, fontWeight: 500, marginBottom: 4 }}>
+    <div style={{ width: 150 }}>
+      <div style={{ fontSize: 12, color: textColor, fontWeight: 500, marginBottom: 5 }}>
         {pct % 1 === 0 ? pct : pct.toFixed(2)}%
       </div>
-      <div style={{ height: 7, borderRadius: 99, background: '#e5e7eb', overflow: 'hidden' }}>
+      <div style={{ height: 6, borderRadius: 99, background: '#e9ecef', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, borderRadius: 99, background: color, transition: 'width .3s' }} />
       </div>
     </div>
@@ -118,6 +118,13 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
 
   const [etapasState, setEtapasState] = useState<Etapa[]>(etapas)
   useEffect(() => { setEtapasState(etapas) }, [etapas])
+
+  const [showTop, setShowTop] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 300)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const [search,            setSearch]            = useState('')
   const [filterStatus,      setFilterStatus]      = useState<FilterStatus>('todas')
@@ -173,10 +180,10 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
   // ── render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ background: '#f3f4f6', minHeight: '100%', padding: '24px 28px 40px' }}>
+    <div style={{ background: '#e5e7eb', minHeight: '100%', padding: '24px 28px 40px' }}>
 
       {/* Title */}
-      <h1 style={{ margin: '0 0 20px', fontSize: 22, fontWeight: 700, color: '#111827' }}>
+      <h1 style={{ margin: '0 0 20px', fontSize: 24, fontWeight: 500, color: '#374151' }}>
         Lista de tarefas
       </h1>
 
@@ -220,7 +227,7 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
           )}
           <button
             onClick={() => window.print()}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 18px', background: '#374151', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 18px', background: '#475569', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 6 2 18 2 18 9" />
@@ -241,9 +248,9 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
           { label: 'Concluída',    value: stats.concluida },
           { label: 'Realizado',    value: `${stats.realizado.toFixed(2)}%` },
         ].map(({ label, value }) => (
-          <div key={label} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '18px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: 28, fontWeight: 700, color: '#f97316', lineHeight: 1 }}>{value}</div>
-            <div style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>{label}</div>
+          <div key={label} style={{ background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 6, padding: '20px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 30, fontWeight: 700, color: '#f15f23', lineHeight: 1 }}>{value}</div>
+            <div style={{ fontSize: 13, color: '#666', marginTop: 8 }}>{label}</div>
           </div>
         ))}
       </div>
@@ -280,13 +287,13 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
                     key={etapa.id}
                     onClick={() => setSelected(isSel ? null : etapa.id)}
                     style={{
-                      background: isRoot ? '#f9fafb' : '#fff',
-                      borderBottom: isLast ? 'none' : '1px solid #f3f4f6',
+                      background: isSel ? '#eff6ff' : isRoot ? '#f3f4f6' : '#fff',
+                      borderBottom: isLast ? 'none' : '1px solid #eef0f2',
                       cursor: 'pointer',
                       transition: 'background .1s',
                     }}
-                    onMouseEnter={(ev) => { if (!isSel) (ev.currentTarget as HTMLElement).style.background = isRoot ? '#f3f4f6' : '#fafafa' }}
-                    onMouseLeave={(ev) => { (ev.currentTarget as HTMLElement).style.background = isRoot ? '#f9fafb' : '#fff' }}
+                    onMouseEnter={(ev) => { if (!isSel) (ev.currentTarget as HTMLElement).style.background = isRoot ? '#e9ebee' : '#f9fafb' }}
+                    onMouseLeave={(ev) => { (ev.currentTarget as HTMLElement).style.background = isSel ? '#eff6ff' : isRoot ? '#f3f4f6' : '#fff' }}
                   >
                     {/* # */}
                     <td style={{ padding: '12px 16px', width: 64, verticalAlign: 'middle' }}>
@@ -311,15 +318,19 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
                     </td>
 
                     {/* Progress */}
-                    <td style={{ padding: '12px 20px 12px 8px', width: 220, verticalAlign: 'middle', textAlign: 'right' }}>
+                    <td style={{ padding: '12px 24px 12px 8px', width: 210, verticalAlign: 'middle' }}>
                       {isRoot ? (
                         pct > 0 ? (
-                          <span style={{ fontSize: 13, fontWeight: 600, color: isSel ? '#3b82f6' : '#6b7280' }}>
-                            {pct % 1 === 0 ? pct : pct.toFixed(2)}%
-                          </span>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: isSel ? '#3b82f6' : '#374151' }}>
+                              {pct % 1 === 0 ? pct : pct.toFixed(2)}%
+                            </span>
+                          </div>
                         ) : null
                       ) : (
-                        <ProgressBar pct={pct} isSelected={isSel} />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <ProgressBar pct={pct} isSelected={isSel} />
+                        </div>
                       )}
                     </td>
 
@@ -345,6 +356,27 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
           </table>
         )}
       </div>
+
+      {/* ── Scroll to top ─────────────────────────────────────────── */}
+      {showTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="Voltar ao topo"
+          style={{
+            position: 'fixed', bottom: 24, right: 24, zIndex: 40,
+            width: 48, height: 48, borderRadius: 10,
+            background: '#fff', border: '1px solid #e5e7eb',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: '#6b7280',
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5" />
+            <polyline points="5 12 12 5 19 12" />
+          </svg>
+        </button>
+      )}
 
       {/* ── Modal ─────────────────────────────────────────────────── */}
       <EtapaModal
