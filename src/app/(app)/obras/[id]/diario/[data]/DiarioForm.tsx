@@ -6,7 +6,6 @@ import { salvarDiario } from './actions'
 import FotosSection from './FotosSection'
 import type { ClimaTipo, TurnoTipo, EquipStatus, OcorrClasse, Etapa, PerfilGlobal } from '@/types/supabase'
 
-// ─── tipos locais ──────────────────────────────────────────────────
 type MaoRow = { id: string; funcao: string; quantidade: number; horas: number; subempreiteira_nome: string; subempreiteira_cnpj: string }
 type EquipRow = { id: string; nome: string; status: EquipStatus; horas_uso: number }
 type ServicoRow = { id: string; descricao: string; etapa_id: string; percentual_conclusao: number; localizacao: string }
@@ -37,19 +36,18 @@ interface Props {
 
 function uid() { return Math.random().toString(36).slice(2) }
 
-// ─── componente principal ──────────────────────────────────────────
 export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [mensagem, setMensagem] = useState('')
   const [restaurarVisivel, setRestaurarVisivel] = useState(false)
+  const [currentDiarioId, setCurrentDiarioId] = useState<string | undefined>(initial.id)
   const localKey = `rascunho_diario_${obraId}_${data}`
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isAprovado = initial.status === 'aprovado'
   const podeAprovar = perfil === 'admin' || perfil === 'engenheiro'
 
-  // ─── estado do formulário ──────────────────────────────────────
   const [climaManha, setClimaManha] = useState<ClimaTipo | ''>(initial.clima_manha ?? '')
   const [climaTarde, setClimaTarde] = useState<ClimaTipo | ''>(initial.clima_tarde ?? '')
   const [turno, setTurno] = useState<TurnoTipo | ''>(initial.turno ?? '')
@@ -60,7 +58,11 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
   const [materiais, setMateriais] = useState<MaterialRow[]>(initial.materiais ?? [])
   const [ocorrencias, setOcorrencias] = useState<OcorrRow[]>(initial.ocorrencias ?? [])
 
-  // ─── auto-save localStorage ────────────────────────────────────
+  // Import atividades modal
+  const [importOpen, setImportOpen]           = useState(false)
+  const [importSearch, setImportSearch]       = useState('')
+  const [importSelecionados, setImportSelecionados] = useState<Set<string>>(new Set())
+
   const estadoAtual = { climaManha, climaTarde, turno, observacoes, maoDeObra, equipamentos, servicos, materiais, ocorrencias }
 
   useEffect(() => {
@@ -73,13 +75,27 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [climaManha, climaTarde, turno, observacoes, maoDeObra, equipamentos, servicos, materiais, ocorrencias])
 
-  // ─── verificar rascunho local ao montar ───────────────────────
   useEffect(() => {
     if (isAprovado) return
     const salvo = localStorage.getItem(localKey)
     if (salvo && !initial.id) setRestaurarVisivel(true)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function abrirImport() {
+    setImportSelecionados(new Set())
+    setImportSearch('')
+    setImportOpen(true)
+  }
+
+  function confirmarImport() {
+    const jaAdicionadas = new Set(servicos.map((s) => s.etapa_id).filter(Boolean))
+    const novas = etapas
+      .filter((e) => importSelecionados.has(e.id) && !jaAdicionadas.has(e.id))
+      .map((e) => ({ id: uid(), descricao: e.nome, etapa_id: e.id, percentual_conclusao: 0, localizacao: '' }))
+    setServicos([...servicos, ...novas])
+    setImportOpen(false)
+  }
 
   function restaurarRascunho() {
     const salvo = localStorage.getItem(localKey)
@@ -99,7 +115,6 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
     setRestaurarVisivel(false)
   }
 
-  // ─── helper de submit ──────────────────────────────────────────
   function buildPayload(status: 'rascunho' | 'preenchido') {
     return {
       obraId,
@@ -131,13 +146,14 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
       } else {
         localStorage.removeItem(localKey)
         setMensagem(status === 'rascunho' ? 'Rascunho salvo.' : 'Marcado como preenchido.')
+        if (res.diarioId && !currentDiarioId) setCurrentDiarioId(res.diarioId)
         router.refresh()
       }
     })
   }
 
   async function handleAprovar() {
-    if (!initial.id) {
+    if (!currentDiarioId) {
       setMensagem('Salve o diário antes de aprovar.')
       return
     }
@@ -145,7 +161,7 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
       const res = await fetch('/api/diario/aprovar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ diarioId: initial.id }),
+        body: JSON.stringify({ diarioId: currentDiarioId }),
       })
       const json = await res.json()
       if (json.error) {
@@ -158,7 +174,6 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
     })
   }
 
-  // ─── header de status ──────────────────────────────────────────
   const statusBadge = initial.status === 'aprovado'
     ? 'bg-green-100 text-green-700'
     : initial.status === 'preenchido'
@@ -173,10 +188,9 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
 
   return (
     <div className="space-y-5 pb-24">
-      {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500 capitalize">{dataBR}</p>
+          <p className="text-sm text-gray-400 capitalize">{dataBR}</p>
           {initial.status && (
             <span className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${statusBadge}`}>
               {statusLabel}
@@ -185,22 +199,21 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
         </div>
       </div>
 
-      {/* Restaurar rascunho */}
       {restaurarVisivel && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
-          <p className="text-sm text-amber-800">Existe um rascunho local não salvo. Deseja restaurar?</p>
+        <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.25)' }}>
+          <p className="text-sm" style={{ color: '#fbbf24' }}>Existe um rascunho local não salvo. Deseja restaurar?</p>
           <div className="flex gap-2 flex-shrink-0">
-            <button onClick={() => setRestaurarVisivel(false)} className="text-xs text-gray-500 hover:text-gray-700">
+            <button onClick={() => setRestaurarVisivel(false)} className="text-xs" style={{ color: '#64748b' }}>
               Ignorar
             </button>
-            <button onClick={restaurarRascunho} className="text-xs font-semibold text-amber-700 hover:text-amber-900">
+            <button onClick={restaurarRascunho} className="text-xs font-semibold" style={{ color: '#f59e0b' }}>
               Restaurar
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Dados gerais ─────────────────────────────────────────── */}
+      {/* Dados gerais */}
       <Section title="Dados gerais">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
@@ -246,12 +259,12 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
         </div>
       </Section>
 
-      {/* ── Mão de obra ──────────────────────────────────────────── */}
+      {/* Mão de obra */}
       <Section title="Mão de obra" badge={maoDeObra.length > 0 ? `${maoDeObra.reduce((s, r) => s + r.quantidade * r.horas, 0).toFixed(1)} HH` : undefined}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+              <tr className="text-left text-xs" style={{ color: '#475569', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <th className="pb-2 font-medium pr-3">Função</th>
                 <th className="pb-2 font-medium pr-3 w-20">Qtd</th>
                 <th className="pb-2 font-medium pr-3 w-20">Horas</th>
@@ -260,7 +273,7 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
                 {!isAprovado && <th className="pb-2 w-8" />}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-white/5">
               {maoDeObra.map((row) => (
                 <tr key={row.id}>
                   <td className="py-1.5 pr-3">
@@ -293,19 +306,19 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
         )}
       </Section>
 
-      {/* ── Equipamentos ─────────────────────────────────────────── */}
+      {/* Equipamentos */}
       <Section title="Equipamentos" badge={equipamentos.length > 0 ? `${equipamentos.length}` : undefined}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+              <tr className="text-left text-xs" style={{ color: '#475569', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <th className="pb-2 font-medium pr-3">Equipamento</th>
                 <th className="pb-2 font-medium pr-3 w-32">Status</th>
                 <th className="pb-2 font-medium pr-3 w-24">Horas uso</th>
                 {!isAprovado && <th className="pb-2 w-8" />}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-white/5">
               {equipamentos.map((row) => (
                 <tr key={row.id}>
                   <td className="py-1.5 pr-3">
@@ -338,11 +351,11 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
         )}
       </Section>
 
-      {/* ── Serviços ─────────────────────────────────────────────── */}
+      {/* Serviços */}
       <Section title="Serviços executados" badge={servicos.length > 0 ? `${servicos.length}` : undefined}>
         <div className="space-y-3">
           {servicos.map((row) => (
-            <div key={row.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 bg-gray-50 rounded-lg relative">
+            <div key={row.id} className="grid grid-cols-1 md:grid-cols-4 gap-2 p-3 rounded-lg relative" style={{ background: 'rgba(255,255,255,0.04)' }}>
               {!isAprovado && (
                 <button onClick={() => setServicos(servicos.filter(r => r.id !== row.id))} className="absolute top-2 right-2 text-gray-300 hover:text-red-400 text-base">×</button>
               )}
@@ -369,18 +382,31 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
           ))}
         </div>
         {!isAprovado && (
-          <button onClick={() => setServicos([...servicos, { id: uid(), descricao: '', etapa_id: '', percentual_conclusao: 0, localizacao: '' }])} className="btn-add">
-            + Adicionar serviço
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setServicos([...servicos, { id: uid(), descricao: '', etapa_id: '', percentual_conclusao: 0, localizacao: '' }])}
+              className="btn-add"
+            >
+              + Adicionar serviço
+            </button>
+            {etapas.length > 0 && (
+              <button
+                onClick={abrirImport}
+                style={{ fontSize: 13, color: '#60a5fa', background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.2)', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontWeight: 500 }}
+              >
+                ↓ Importar atividades
+              </button>
+            )}
+          </div>
         )}
       </Section>
 
-      {/* ── Materiais ────────────────────────────────────────────── */}
+      {/* Materiais */}
       <Section title="Materiais recebidos" badge={materiais.length > 0 ? `${materiais.length}` : undefined}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+              <tr className="text-left text-xs" style={{ color: '#475569', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 <th className="pb-2 font-medium pr-3">Material</th>
                 <th className="pb-2 font-medium pr-3 w-24">Qtd</th>
                 <th className="pb-2 font-medium pr-3 w-20">Un.</th>
@@ -389,7 +415,7 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
                 {!isAprovado && <th className="pb-2 w-8" />}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-white/5">
               {materiais.map((row) => (
                 <tr key={row.id}>
                   <td className="py-1.5 pr-3"><input value={row.item} onChange={(e) => setMateriais(materiais.map(r => r.id === row.id ? { ...r, item: e.target.value } : r))} disabled={isAprovado} className="input-inline" placeholder="Ex: Cimento CP-II" /></td>
@@ -410,11 +436,11 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
         )}
       </Section>
 
-      {/* ── Ocorrências ──────────────────────────────────────────── */}
+      {/* Ocorrências */}
       <Section title="Ocorrências" badge={ocorrencias.length > 0 ? `${ocorrencias.filter(o => o.classe === 'critica').length > 0 ? '⚠️ ' : ''}${ocorrencias.length}` : undefined}>
         <div className="space-y-2">
           {ocorrencias.map((row) => (
-            <div key={row.id} className={`flex gap-3 p-3 rounded-lg relative ${row.classe === 'critica' ? 'bg-red-50 border border-red-200' : row.classe === 'alerta' ? 'bg-yellow-50 border border-yellow-200' : 'bg-gray-50'}`}>
+            <div key={row.id} className="flex gap-3 p-3 rounded-lg relative" style={{ background: row.classe === 'critica' ? 'rgba(220,38,38,0.12)' : row.classe === 'alerta' ? 'rgba(234,179,8,0.1)' : 'rgba(255,255,255,0.04)', border: row.classe === 'critica' ? '1px solid rgba(220,38,38,0.3)' : row.classe === 'alerta' ? '1px solid rgba(234,179,8,0.2)' : '1px solid rgba(255,255,255,0.05)' }}>
               {!isAprovado && <button onClick={() => setOcorrencias(ocorrencias.filter(r => r.id !== row.id))} className="absolute top-2 right-2 text-gray-300 hover:text-red-400 text-base">×</button>}
               <div className="flex-1 min-w-0">
                 <textarea value={row.descricao} onChange={(e) => setOcorrencias(ocorrencias.map(r => r.id === row.id ? { ...r, descricao: e.target.value } : r))} disabled={isAprovado} rows={2} className="input resize-none" placeholder="Descreva a ocorrência..." />
@@ -437,24 +463,135 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
         )}
       </Section>
 
-      {/* ── Fotos ────────────────────────────────────────────────── */}
+      {/* Fotos */}
       <Section title="Fotos">
         <FotosSection
           obraId={obraId}
-          diarioId={initial.id}
+          diarioId={currentDiarioId}
           isAprovado={isAprovado}
         />
       </Section>
 
-      {/* ── Barra de ações fixa ───────────────────────────────────── */}
+      {/* Modal — Importar atividades */}
+      {importOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+          onClick={() => setImportOpen(false)}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
+          <div
+            style={{ position: 'relative', background: '#1e293b', borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)', width: '100%', maxWidth: 480, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ padding: '20px 24px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#f1f5f9' }}>Importar atividades</h2>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#475569' }}>
+                    Selecione as atividades do cronograma para adicionar como serviços
+                  </p>
+                </div>
+                <button onClick={() => setImportOpen(false)}
+                  style={{ background: 'transparent', border: 'none', color: '#475569', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+              </div>
+              <input
+                type="search"
+                placeholder="Filtrar atividades..."
+                value={importSearch}
+                onChange={(e) => setImportSearch(e.target.value)}
+                autoFocus
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a', color: '#e2e8f0', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+              />
+            </div>
+
+            {/* List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+              {(() => {
+                const jaAdicionadas = new Set(servicos.map((s) => s.etapa_id).filter(Boolean))
+                const visiveis = etapas.filter((e) =>
+                  !importSearch || e.nome.toLowerCase().includes(importSearch.toLowerCase())
+                )
+                if (visiveis.length === 0) return (
+                  <p style={{ textAlign: 'center', padding: '24px 0', color: '#475569', fontSize: 13 }}>
+                    Nenhuma atividade encontrada
+                  </p>
+                )
+                return visiveis.map((e) => {
+                  const jaTem = jaAdicionadas.has(e.id)
+                  const marcado = importSelecionados.has(e.id)
+                  return (
+                    <label
+                      key={e.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 12px', borderRadius: 8, cursor: jaTem ? 'default' : 'pointer',
+                        marginBottom: 2,
+                        background: marcado ? 'rgba(96,165,250,0.1)' : 'transparent',
+                        border: marcado ? '1px solid rgba(96,165,250,0.2)' : '1px solid transparent',
+                        opacity: jaTem ? 0.4 : 1,
+                        transition: 'background .1s',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={marcado}
+                        disabled={jaTem}
+                        onChange={() => {
+                          if (jaTem) return
+                          setImportSelecionados((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(e.id)) next.delete(e.id)
+                            else next.add(e.id)
+                            return next
+                          })
+                        }}
+                        style={{ width: 16, height: 16, accentColor: '#60a5fa', flexShrink: 0 }}
+                      />
+                      <span style={{ fontSize: 13, color: jaTem ? '#475569' : '#e2e8f0', flex: 1 }}>
+                        {e.nome}
+                      </span>
+                      {jaTem && (
+                        <span style={{ fontSize: 10, color: '#475569', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: 99, flexShrink: 0 }}>
+                          já adicionada
+                        </span>
+                      )}
+                    </label>
+                  )
+                })
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div style={{ padding: '12px 24px 20px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <span style={{ fontSize: 12, color: '#475569' }}>
+                {importSelecionados.size > 0 ? `${importSelecionados.size} selecionada${importSelecionados.size > 1 ? 's' : ''}` : 'Nenhuma selecionada'}
+              </span>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setImportOpen(false)}
+                  style={{ padding: '8px 18px', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', background: 'transparent', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarImport}
+                  disabled={importSelecionados.size === 0}
+                  style={{ padding: '8px 20px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: importSelecionados.size === 0 ? 'default' : 'pointer', opacity: importSelecionados.size === 0 ? 0.5 : 1 }}>
+                  Importar {importSelecionados.size > 0 ? `(${importSelecionados.size})` : ''}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Barra de ações fixa — offset 260px da sidebar */}
       {!isAprovado && (
-        <div className="fixed bottom-0 left-0 md:left-56 right-0 bg-white border-t border-gray-200 px-4 py-3 flex items-center gap-3 z-20">
-          {mensagem && <span className="text-sm text-gray-500 flex-1 truncate">{mensagem}</span>}
+        <div className="fixed bottom-0 left-[260px] right-0 px-4 py-3 flex items-center gap-3 z-20" style={{ background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          {mensagem && <span className="text-sm flex-1 truncate" style={{ color: '#64748b' }}>{mensagem}</span>}
           <div className="flex gap-2 ml-auto">
             <button
               onClick={() => handleSalvar('rascunho')}
               disabled={isPending}
-              className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-60"
+              className="px-4 py-2 text-sm font-medium rounded-lg disabled:opacity-60"
+              style={{ border: '1px solid rgba(255,255,255,0.12)', color: '#94a3b8', background: 'transparent' }}
             >
               {isPending ? '...' : 'Salvar rascunho'}
             </button>
@@ -479,7 +616,7 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
       )}
 
       {isAprovado && (
-        <div className="fixed bottom-0 left-0 md:left-56 right-0 bg-green-50 border-t border-green-200 px-4 py-3 text-center text-sm text-green-700 font-medium z-20">
+        <div className="fixed bottom-0 left-[260px] right-0 px-4 py-3 text-center text-sm font-medium z-20" style={{ background: 'rgba(22,163,74,0.15)', borderTop: '1px solid rgba(22,163,74,0.3)', color: '#4ade80' }}>
           ✓ Diário aprovado — somente leitura
         </div>
       )}
@@ -487,14 +624,13 @@ export default function DiarioForm({ obraId, data, perfil, etapas, initial }: Pr
   )
 }
 
-// ─── componentes auxiliares ────────────────────────────────────────
 function Section({ title, badge, children }: { title: string; badge?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+    <div style={{ background: '#1e293b', borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', padding: '16px 20px' }} className="space-y-4">
       <div className="flex items-center gap-2">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h2>
+        <h2 style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '.08em', textTransform: 'uppercase' as const }}>{title}</h2>
         {badge && (
-          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">{badge}</span>
+          <span className="text-xs bg-red-900/40 text-red-300 px-2 py-0.5 rounded-full font-medium">{badge}</span>
         )}
       </div>
       {children}
