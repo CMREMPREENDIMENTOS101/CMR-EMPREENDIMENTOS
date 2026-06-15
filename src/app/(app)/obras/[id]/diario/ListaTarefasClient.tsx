@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Etapa } from '@/types/supabase'
-import { atualizarEtapa } from '../cronograma/actions'
+import { atualizarEtapa, criarEtapa } from '../cronograma/actions'
 
 interface Props {
   obraId: string
@@ -136,7 +137,140 @@ function EtapaRow({ e, obraId }: { e: Etapa; obraId: string }) {
   )
 }
 
+// ─── Modal de criação ───────────────────────────────────────────
+
+interface NovaEtapaForm {
+  nome: string
+  data_inicio_prev: string
+  data_fim_prev: string
+  percentual_previsto: string
+}
+
+const EMPTY_NOVA: NovaEtapaForm = { nome: '', data_inicio_prev: '', data_fim_prev: '', percentual_previsto: '100' }
+
+function NovaEtapaModal({
+  obraId, paiId, paiNome, ordem, onClose, onSaved,
+}: {
+  obraId: string
+  paiId: string | null
+  paiNome: string | null
+  ordem: number
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [form, setForm] = useState<NovaEtapaForm>(EMPTY_NOVA)
+  const [erro, setErro] = useState('')
+  const [isPending, startTransition] = useTransition()
+
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '8px 10px', borderRadius: 6,
+    background: '#0f172a', border: '1px solid rgba(255,255,255,0.12)',
+    color: '#f1f5f9', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+  }
+  const lbl: React.CSSProperties = {
+    display: 'block', fontSize: 11, fontWeight: 600, color: '#94a3b8',
+    marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em',
+  }
+
+  function salvar() {
+    if (!form.nome.trim()) { setErro('Informe o nome.'); return }
+    startTransition(async () => {
+      const res = await criarEtapa(obraId, {
+        nome: form.nome.trim(),
+        etapa_pai_id: paiId,
+        data_inicio_prev: form.data_inicio_prev || null,
+        data_fim_prev: form.data_fim_prev || null,
+        data_inicio_real: null,
+        data_fim_real: null,
+        percentual_previsto: Math.max(0, Math.min(100, Number(form.percentual_previsto) || 100)),
+        percentual_real: 0,
+        ordem,
+      })
+      if (res?.error) { setErro(res.error); return }
+      onSaved()
+    })
+  }
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={onClose}
+    >
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} />
+      <div
+        style={{ position: 'relative', background: '#1e293b', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', width: '100%', maxWidth: 440, padding: 22 }}
+        onClick={(ev) => ev.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#f1f5f9' }}>
+            {paiId ? 'Nova subetapa' : 'Nova etapa'}
+          </h2>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+        </div>
+
+        {paiNome && (
+          <p style={{ margin: '0 0 14px', fontSize: 12, color: '#64748b' }}>
+            Subetapa de <span style={{ color: '#cbd5e1', fontWeight: 600 }}>{paiNome}</span>
+          </p>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={lbl}>Nome *</label>
+            <input
+              value={form.nome}
+              onChange={(e) => setForm((p) => ({ ...p, nome: e.target.value }))}
+              onKeyDown={(e) => { if (e.key === 'Enter') salvar() }}
+              autoFocus
+              placeholder={paiId ? 'Ex: Concretagem, Armação...' : 'Ex: Fundação, Estrutura...'}
+              style={inp}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={lbl}>Início previsto</label>
+              <input type="date" value={form.data_inicio_prev} onChange={(e) => setForm((p) => ({ ...p, data_inicio_prev: e.target.value }))} style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Fim previsto</label>
+              <input type="date" value={form.data_fim_prev} onChange={(e) => setForm((p) => ({ ...p, data_fim_prev: e.target.value }))} style={inp} />
+            </div>
+          </div>
+
+          <div style={{ maxWidth: 140 }}>
+            <label style={lbl}>% Previsto</label>
+            <input type="number" min={0} max={100} value={form.percentual_previsto} onChange={(e) => setForm((p) => ({ ...p, percentual_previsto: e.target.value }))} style={inp} />
+          </div>
+
+          {erro && (
+            <div style={{ padding: '8px 12px', background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.4)', borderRadius: 6, fontSize: 13, color: '#fca5a5' }}>{erro}</div>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+          <button onClick={onClose} style={{ padding: '8px 16px', border: '1px solid rgba(255,255,255,0.12)', color: '#cbd5e1', background: 'transparent', borderRadius: 6, fontSize: 13, cursor: 'pointer' }}>
+            Cancelar
+          </button>
+          <button
+            onClick={salvar}
+            disabled={isPending || !form.nome.trim()}
+            style={{ padding: '8px 22px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: isPending || !form.nome.trim() ? 0.6 : 1 }}
+          >
+            {isPending ? 'Salvando...' : 'Criar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Componente principal ───────────────────────────────────────
+
 export default function ListaTarefasClient({ obraId, etapas }: Props) {
+  const router = useRouter()
+  const [modal, setModal] = useState<{ paiId: string | null; paiNome: string | null } | null>(null)
+
   const semPai = etapas.filter(e => !e.etapa_pai_id)
   const comPai = etapas.filter(e => e.etapa_pai_id)
 
@@ -144,26 +278,49 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
     ? Math.round(etapas.reduce((s, e) => s + e.percentual_real, 0) / etapas.length)
     : 0
 
+  function onSaved() {
+    setModal(null)
+    router.refresh()
+  }
+
+  const subBtn: React.CSSProperties = {
+    margin: '6px 0 0 20px', fontSize: 11, color: '#94a3b8',
+    background: 'transparent', border: '1px dashed rgba(255,255,255,0.15)',
+    borderRadius: 6, padding: '5px 12px', cursor: 'pointer',
+  }
+
   return (
     <div style={{ padding: '24px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>Lista de Tarefas</h1>
           <p style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
             {etapas.length} etapa{etapas.length !== 1 ? 's' : ''} · Avanço médio {avanco}%
           </p>
         </div>
-        <Link
-          href={`/obras/${obraId}/diario/${hoje}`}
-          style={{
-            background: '#dc2626', color: '#fff',
-            padding: '8px 16px', borderRadius: 8,
-            fontSize: 13, fontWeight: 600, textDecoration: 'none',
-          }}
-        >
-          + Diário de hoje
-        </Link>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setModal({ paiId: null, paiNome: null })}
+            style={{
+              background: '#334155', color: '#f1f5f9',
+              padding: '8px 16px', borderRadius: 8,
+              fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
+            }}
+          >
+            + Nova etapa
+          </button>
+          <Link
+            href={`/obras/${obraId}/diario/${hoje}`}
+            style={{
+              background: '#dc2626', color: '#fff',
+              padding: '8px 16px', borderRadius: 8,
+              fontSize: 13, fontWeight: 600, textDecoration: 'none',
+            }}
+          >
+            + Diário de hoje
+          </Link>
+        </div>
       </div>
 
       {/* Barra de avanço geral */}
@@ -179,13 +336,13 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
 
       {etapas.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '48px 0', color: '#475569' }}>
-          <p style={{ fontSize: 14, marginBottom: 8 }}>Nenhuma etapa cadastrada.</p>
-          <Link
-            href={`/obras/${obraId}/cronograma`}
-            style={{ fontSize: 13, color: '#dc2626', textDecoration: 'none' }}
+          <p style={{ fontSize: 14, marginBottom: 12 }}>Nenhuma etapa cadastrada.</p>
+          <button
+            onClick={() => setModal({ paiId: null, paiNome: null })}
+            style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
           >
-            Adicionar etapas no Cronograma →
-          </Link>
+            + Criar primeira etapa
+          </button>
         </div>
       ) : (
         <div>
@@ -202,6 +359,9 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
                     ))}
                   </ul>
                 )}
+                <button onClick={() => setModal({ paiId: e.id, paiNome: e.nome })} style={subBtn}>
+                  + Subetapa
+                </button>
               </div>
             ))}
           </ul>
@@ -215,6 +375,17 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
             </ul>
           )}
         </div>
+      )}
+
+      {modal && (
+        <NovaEtapaModal
+          obraId={obraId}
+          paiId={modal.paiId}
+          paiNome={modal.paiNome}
+          ordem={etapas.length}
+          onClose={() => setModal(null)}
+          onSaved={onSaved}
+        />
       )}
     </div>
   )

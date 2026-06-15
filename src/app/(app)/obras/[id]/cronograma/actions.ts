@@ -24,6 +24,7 @@ export async function criarEtapa(obraId: string, payload: EtapaPayload) {
   if (error) return { error: error.message }
 
   revalidatePath(`/obras/${obraId}/cronograma`)
+  revalidatePath(`/obras/${obraId}/diario`)
   return { success: true }
 }
 
@@ -36,6 +37,7 @@ export async function atualizarEtapa(obraId: string, etapaId: string, payload: P
   if (error) return { error: error.message }
 
   revalidatePath(`/obras/${obraId}/cronograma`)
+  revalidatePath(`/obras/${obraId}/diario`)
   return { success: true }
 }
 
@@ -48,5 +50,6 @@ export async function excluirEtapa(obraId: string, etapaId: string) {
   if (error) return { error: error.message }
 
   revalidatePath(`/obras/${obraId}/cronograma`)
+  revalidatePath(`/obras/${obraId}/diario`)
   return { success: true }
 }
