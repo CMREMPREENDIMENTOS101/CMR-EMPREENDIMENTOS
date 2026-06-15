@@ -13,10 +13,9 @@ export default async function ObraLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: obra }, { count: totalRelatorios }, { count: totalEtapas }, { data: usuarioRow }] = await Promise.all([
+  const [{ data: obra }, { count: totalRelatorios }, { data: usuarioRow }] = await Promise.all([
     supabase.from('obras').select('id, nome').eq('id', id).single(),
     supabase.from('diarios').select('*', { count: 'exact', head: true }).eq('obra_id', id),
-    supabase.from('etapas').select('*', { count: 'exact', head: true }).eq('obra_id', id),
     user
       ? supabase.from('usuarios').select('empresa_id, perfil').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
@@ -42,7 +41,6 @@ export default async function ObraLayout({
         obraId={id}
         obraNome={obra.nome}
         totalRelatorios={totalRelatorios ?? 0}
-        totalEtapas={totalEtapas ?? 0}
         logoUrl={logoUrl}
         isAdmin={usuarioRow?.perfil === 'admin'}
         diarioHoje={hoje}

@@ -9,14 +9,13 @@ interface Props {
   obraId: string
   obraNome: string
   totalRelatorios: number
-  totalEtapas: number
   logoUrl?: string | null
   isAdmin?: boolean
   diarioHoje: string
 }
 
 export default function ObraSidebar({
-  obraId, obraNome, totalRelatorios, totalEtapas, logoUrl, isAdmin = false, diarioHoje,
+  obraId, obraNome, totalRelatorios, logoUrl, isAdmin = false, diarioHoje,
 }: Props) {
   const pathname = usePathname()
   const router   = useRouter()
@@ -27,13 +26,11 @@ export default function ObraSidebar({
   const [currentLogo, setCurrentLogo] = useState<string | null>(logoUrl ?? null)
 
   const isVisaoGeral = pathname === `/obras/${obraId}`
-  const isCronograma = pathname.startsWith(`/obras/${obraId}/cronograma`)
   const isDiario     = pathname.startsWith(`/obras/${obraId}/diario`)
   const isRelatorios = pathname.startsWith(`/obras/${obraId}/relatorios`)
 
   const items = [
     { href: `/obras/${obraId}`,            label: 'Visão geral',     icon: 'grid_view',     count: null,            active: isVisaoGeral },
-    { href: `/obras/${obraId}/cronograma`, label: 'Lista de tarefas',icon: 'checklist',     count: totalEtapas,     active: isCronograma },
     { href: `/obras/${obraId}/diario`,     label: 'Diário de obras', icon: 'calendar_today',count: totalRelatorios, active: isDiario     },
     { href: `/obras/${obraId}/relatorios`, label: 'Relatórios',      icon: 'description',   count: null,            active: isRelatorios },
   ]

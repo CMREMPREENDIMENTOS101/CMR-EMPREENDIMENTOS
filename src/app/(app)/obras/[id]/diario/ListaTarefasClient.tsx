@@ -149,16 +149,17 @@ interface NovaEtapaForm {
 const EMPTY_NOVA: NovaEtapaForm = { nome: '', data_inicio_prev: '', data_fim_prev: '', percentual_previsto: '100' }
 
 function NovaEtapaModal({
-  obraId, paiId, paiNome, ordem, onClose, onSaved,
+  obraId, roots, initialPaiId, ordem, onClose, onSaved,
 }: {
   obraId: string
-  paiId: string | null
-  paiNome: string | null
+  roots: Etapa[]
+  initialPaiId: string | null
   ordem: number
   onClose: () => void
   onSaved: () => void
 }) {
   const [form, setForm] = useState<NovaEtapaForm>(EMPTY_NOVA)
+  const [paiId, setPaiId] = useState<string | null>(initialPaiId)
   const [erro, setErro] = useState('')
   const [isPending, startTransition] = useTransition()
 
@@ -208,12 +209,6 @@ function NovaEtapaModal({
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
 
-        {paiNome && (
-          <p style={{ margin: '0 0 14px', fontSize: 12, color: '#64748b' }}>
-            Subetapa de <span style={{ color: '#cbd5e1', fontWeight: 600 }}>{paiNome}</span>
-          </p>
-        )}
-
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <label style={lbl}>Nome *</label>
@@ -225,6 +220,19 @@ function NovaEtapaModal({
               placeholder={paiId ? 'Ex: Concretagem, Armação...' : 'Ex: Fundação, Estrutura...'}
               style={inp}
             />
+          </div>
+
+          <div>
+            <label style={lbl}>Etapa pai (opcional)</label>
+            <select value={paiId ?? ''} onChange={(e) => setPaiId(e.target.value || null)} style={inp}>
+              <option value="">— Nenhuma (etapa principal)</option>
+              {roots.map((r) => (
+                <option key={r.id} value={r.id}>{r.nome}</option>
+              ))}
+            </select>
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: '#64748b' }}>
+              Selecione uma etapa para criar uma subetapa.
+            </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -269,7 +277,8 @@ function NovaEtapaModal({
 
 export default function ListaTarefasClient({ obraId, etapas }: Props) {
   const router = useRouter()
-  const [modal, setModal] = useState<{ paiId: string | null; paiNome: string | null } | null>(null)
+  const [open, setOpen] = useState(false)
+  const [initialPai, setInitialPai] = useState<string | null>(null)
 
   const semPai = etapas.filter(e => !e.etapa_pai_id)
   const comPai = etapas.filter(e => e.etapa_pai_id)
@@ -278,8 +287,13 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
     ? Math.round(etapas.reduce((s, e) => s + e.percentual_real, 0) / etapas.length)
     : 0
 
+  function abrir(paiId: string | null) {
+    setInitialPai(paiId)
+    setOpen(true)
+  }
+
   function onSaved() {
-    setModal(null)
+    setOpen(false)
     router.refresh()
   }
 
@@ -299,28 +313,16 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
             {etapas.length} etapa{etapas.length !== 1 ? 's' : ''} · Avanço médio {avanco}%
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => setModal({ paiId: null, paiNome: null })}
-            style={{
-              background: '#334155', color: '#f1f5f9',
-              padding: '8px 16px', borderRadius: 8,
-              fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
-            }}
-          >
-            + Nova etapa
-          </button>
-          <Link
-            href={`/obras/${obraId}/diario/${hoje}`}
-            style={{
-              background: '#dc2626', color: '#fff',
-              padding: '8px 16px', borderRadius: 8,
-              fontSize: 13, fontWeight: 600, textDecoration: 'none',
-            }}
-          >
-            + Diário de hoje
-          </Link>
-        </div>
+        <button
+          onClick={() => abrir(null)}
+          style={{
+            background: '#dc2626', color: '#fff',
+            padding: '8px 16px', borderRadius: 8,
+            fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
+          }}
+        >
+          + Criar etapa
+        </button>
       </div>
 
       {/* Barra de avanço geral */}
@@ -338,7 +340,7 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
         <div style={{ textAlign: 'center', padding: '48px 0', color: '#475569' }}>
           <p style={{ fontSize: 14, marginBottom: 12 }}>Nenhuma etapa cadastrada.</p>
           <button
-            onClick={() => setModal({ paiId: null, paiNome: null })}
+            onClick={() => abrir(null)}
             style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
           >
             + Criar primeira etapa
@@ -359,7 +361,7 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
                     ))}
                   </ul>
                 )}
-                <button onClick={() => setModal({ paiId: e.id, paiNome: e.nome })} style={subBtn}>
+                <button onClick={() => abrir(e.id)} style={subBtn}>
                   + Subetapa
                 </button>
               </div>
@@ -377,13 +379,13 @@ export default function ListaTarefasClient({ obraId, etapas }: Props) {
         </div>
       )}
 
-      {modal && (
+      {open && (
         <NovaEtapaModal
           obraId={obraId}
-          paiId={modal.paiId}
-          paiNome={modal.paiNome}
+          roots={semPai}
+          initialPaiId={initialPai}
           ordem={etapas.length}
-          onClose={() => setModal(null)}
+          onClose={() => setOpen(false)}
           onSaved={onSaved}
         />
       )}
