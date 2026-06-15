@@ -67,18 +67,18 @@ function parentPct(etapas: Etapa[], id: string): number {
   return ch.reduce((s, c) => s + c.percentual_real, 0) / ch.length
 }
 
+const fmtPct = (v: number) => (v % 1 === 0 ? v : v.toFixed(2))
+
 // ─── progress bar ─────────────────────────────────────────────────────────────
 
 function ProgressBar({ pct, isSelected }: { pct: number; isSelected: boolean }) {
-  const color = pct >= 100 ? '#4cd965' : pct > 0 ? '#ff9500' : '#e5e7eb'
-  const textColor = isSelected ? '#3b82f6' : '#4b5563'
+  const color = pct >= 100 ? '#22c55e' : pct > 0 ? '#f97316' : 'transparent'
+  const textColor = isSelected ? '#2563eb' : '#4b5563'
 
   return (
     <div style={{ width: 150 }}>
-      <div style={{ fontSize: 12, color: textColor, fontWeight: 500, marginBottom: 5 }}>
-        {pct % 1 === 0 ? pct : pct.toFixed(2)}%
-      </div>
-      <div style={{ height: 6, borderRadius: 99, background: '#e9ecef', overflow: 'hidden' }}>
+      <div style={{ fontSize: 12, color: textColor, fontWeight: 500, marginBottom: 5 }}>{fmtPct(pct)}%</div>
+      <div style={{ height: 6, borderRadius: 99, background: '#e5e7eb', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, borderRadius: 99, background: color, transition: 'width .3s' }} />
       </div>
     </div>
@@ -146,7 +146,7 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
   }), [sorted, search, soEtapas, ocultarConcluidas, filterStatus])
 
   // ── modal ────────────────────────────────────────────────────────────────
-  function openAdd()         { setForm({ ...EMPTY_FORM, ordem: etapas.length }); setModal('add'); setMsg('') }
+  function openAdd()         { setForm({ ...EMPTY_FORM, ordem: etapasState.length }); setModal('add'); setMsg('') }
   function openEdit(e: Etapa){ setForm(etapaToForm(e)); setModal(e); setMsg('') }
   function closeModal()      { setModal(null); setMsg('') }
   function handleChange(f: keyof EtapaPayload, v: string | number | null) { setForm((p) => ({ ...p, [f]: v })) }
@@ -180,151 +180,153 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
   // ── render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ background: '#e5e7eb', minHeight: '100%', padding: '24px 28px 40px' }}>
+    <div style={{ background: '#f3f4f6', minHeight: '100%', padding: '24px 28px 40px' }}>
 
-      {/* Title */}
-      <h1 style={{ margin: '0 0 20px', fontSize: 24, fontWeight: 500, color: '#374151' }}>
+      {/* Título */}
+      <h1 style={{ margin: '0 0 16px', fontSize: 22, fontWeight: 600, color: '#111827' }}>
         Lista de tarefas
       </h1>
 
-      {/* ── Filter bar ───────────────────────────────────────────── */}
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-        <input
-          type="search"
-          placeholder="Pesquisa"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: '1 1 220px', minWidth: 160, padding: '8px 14px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', color: '#111827', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
-        />
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-          style={{ padding: '8px 14px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          <option value="todas">Todas as tarefas</option>
-          <option value="nao-iniciada">Não iniciadas</option>
-          <option value="andamento">Em andamento</option>
-          <option value="concluida">Concluídas</option>
-        </select>
+      {/* Container único branco */}
+      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 1px 3px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#4b5563', cursor: 'pointer', userSelect: 'none' }}>
-            <input type="checkbox" checked={soEtapas} onChange={(e) => setSoEtapas(e.target.checked)} style={{ width: 15, height: 15 }} />
-            Exibir somente as etapas
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#4b5563', cursor: 'pointer', userSelect: 'none' }}>
-            <input type="checkbox" checked={ocultarConcluidas} onChange={(e) => setOcultarConcluidas(e.target.checked)} style={{ width: 15, height: 15 }} />
-            Ocultar etapas concluídas
-          </label>
-        </div>
+        {/* Filtros + cards de resumo */}
+        <div style={{ padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+            <input
+              type="search"
+              placeholder="Pesquisa"
+              aria-label="Pesquisar tarefas"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ flex: '1 1 240px', minWidth: 180, padding: '9px 14px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', color: '#111827', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+            />
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
+              aria-label="Filtrar por status"
+              style={{ padding: '9px 14px', borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', color: '#374151', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              <option value="todas">Todas as tarefas</option>
+              <option value="nao-iniciada">Não iniciadas</option>
+              <option value="andamento">Em andamento</option>
+              <option value="concluida">Concluídas</option>
+            </select>
 
-        <div style={{ display: 'flex', gap: 10, marginLeft: 'auto', alignItems: 'center' }}>
-          {podeEditar && (
-            <button onClick={openAdd}
-              style={{ padding: '8px 16px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              + Nova
-            </button>
-          )}
-          <button
-            onClick={() => window.print()}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 18px', background: '#475569', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9" />
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-              <rect x="6" y="14" width="12" height="8" />
-            </svg>
-            Imprimir
-          </button>
-        </div>
-      </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 2 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#4b5563', cursor: 'pointer', userSelect: 'none' }}>
+                <input type="checkbox" checked={soEtapas} onChange={(e) => setSoEtapas(e.target.checked)} style={{ width: 15, height: 15 }} />
+                Exibir somente as etapas
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13, color: '#4b5563', cursor: 'pointer', userSelect: 'none' }}>
+                <input type="checkbox" checked={ocultarConcluidas} onChange={(e) => setOcultarConcluidas(e.target.checked)} style={{ width: 15, height: 15 }} />
+                Ocultar etapas concluídas
+              </label>
+            </div>
 
-      {/* ── Stats cards ──────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 16 }}>
-        {[
-          { label: 'Total',        value: stats.total },
-          { label: 'Não iniciada', value: stats.naoIniciada },
-          { label: 'Em andamento', value: stats.andamento },
-          { label: 'Concluída',    value: stats.concluida },
-          { label: 'Realizado',    value: `${stats.realizado.toFixed(2)}%` },
-        ].map(({ label, value }) => (
-          <div key={label} style={{ background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 6, padding: '20px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontWeight: 700, color: '#f15f23', lineHeight: 1 }}>{value}</div>
-            <div style={{ fontSize: 13, color: '#666', marginTop: 8 }}>{label}</div>
+            <div style={{ display: 'flex', gap: 10, marginLeft: 'auto', alignItems: 'center' }}>
+              {podeEditar && (
+                <button onClick={openAdd}
+                  style={{ padding: '9px 16px', background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  + Criar etapa
+                </button>
+              )}
+              <button
+                onClick={() => window.print()}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', background: '#374151', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+                Imprimir
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* ── Table ────────────────────────────────────────────────── */}
-      <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+          {/* Cards de resumo */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginTop: 16 }}>
+            {[
+              { label: 'Total',        value: stats.total },
+              { label: 'Não iniciada', value: stats.naoIniciada },
+              { label: 'Em andamento', value: stats.andamento },
+              { label: 'Concluída',    value: stats.concluida },
+              { label: 'Realizado',    value: `${stats.realizado.toFixed(2)}%` },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 6, padding: '18px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 30, fontWeight: 700, color: '#f97316', lineHeight: 1 }}>{value}</div>
+                <div style={{ fontSize: 13, color: '#6b7280', marginTop: 8 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tabela */}
         {etapasState.length === 0 ? (
-          <div style={{ padding: '60px 20px', textAlign: 'center', color: '#9ca3af' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
-            <p style={{ fontSize: 14, marginBottom: 20 }}>Nenhuma atividade cadastrada</p>
+          <div style={{ padding: '56px 20px', textAlign: 'center', color: '#9ca3af', borderTop: '1px solid #f0f0f0' }}>
+            <p style={{ fontSize: 14, marginBottom: 16 }}>Nenhuma etapa cadastrada</p>
             {podeEditar && (
               <button onClick={openAdd}
                 style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                + Nova atividade
+                + Criar primeira etapa
               </button>
             )}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 13, fontStyle: 'italic' }}>
-            Nenhuma atividade encontrada
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: '#9ca3af', fontSize: 13, fontStyle: 'italic', borderTop: '1px solid #f0f0f0' }}>
+            Nenhuma tarefa encontrada
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', borderTop: '1px solid #f0f0f0' }}>
             <tbody>
-              {filtered.map((etapa, idx) => {
-                const isRoot   = !etapa.etapa_pai_id
-                const num      = numbers.get(etapa.id) ?? ''
-                const pct      = isRoot ? parentPct(etapasState, etapa.id) : etapa.percentual_real
-                const isSel    = selected === etapa.id
-                const isLast   = idx === filtered.length - 1
+              {filtered.map((etapa) => {
+                const isRoot = !etapa.etapa_pai_id
+                const num    = numbers.get(etapa.id) ?? ''
+                const pct    = isRoot ? parentPct(etapasState, etapa.id) : etapa.percentual_real
+                const isSel  = selected === etapa.id
 
                 return (
                   <tr
                     key={etapa.id}
                     onClick={() => setSelected(isSel ? null : etapa.id)}
                     style={{
-                      background: isSel ? '#eff6ff' : isRoot ? '#f3f4f6' : '#fff',
-                      borderBottom: isLast ? 'none' : '1px solid #eef0f2',
+                      background: isSel ? '#eff6ff' : isRoot ? '#f9fafb' : '#fff',
+                      borderBottom: '1px solid #f0f0f0',
                       cursor: 'pointer',
                       transition: 'background .1s',
                     }}
-                    onMouseEnter={(ev) => { if (!isSel) (ev.currentTarget as HTMLElement).style.background = isRoot ? '#e9ebee' : '#f9fafb' }}
-                    onMouseLeave={(ev) => { (ev.currentTarget as HTMLElement).style.background = isSel ? '#eff6ff' : isRoot ? '#f3f4f6' : '#fff' }}
+                    onMouseEnter={(ev) => { if (!isSel) (ev.currentTarget as HTMLElement).style.background = isRoot ? '#f3f4f6' : '#fafafa' }}
+                    onMouseLeave={(ev) => { (ev.currentTarget as HTMLElement).style.background = isSel ? '#eff6ff' : isRoot ? '#f9fafb' : '#fff' }}
                   >
                     {/* # */}
-                    <td style={{ padding: '12px 16px', width: 64, verticalAlign: 'middle' }}>
+                    <td style={{ padding: '12px 16px', width: 70, verticalAlign: 'middle' }}>
                       <span style={{
                         fontSize: isRoot ? 14 : 13,
                         fontWeight: isRoot ? 700 : 400,
-                        color: isSel ? '#3b82f6' : isRoot ? '#111827' : '#9ca3af',
+                        color: isSel ? '#2563eb' : isRoot ? '#111827' : '#9ca3af',
                       }}>
                         {num}
                       </span>
                     </td>
 
-                    {/* Name */}
+                    {/* Nome */}
                     <td style={{ padding: '12px 8px', verticalAlign: 'middle' }}>
                       <span style={{
                         fontSize: isRoot ? 14 : 13,
                         fontWeight: isRoot ? 700 : 400,
-                        color: isSel ? '#3b82f6' : isRoot ? '#111827' : '#374151',
+                        color: isSel ? '#2563eb' : isRoot ? '#111827' : '#374151',
                       }}>
                         {etapa.nome}
                       </span>
                     </td>
 
-                    {/* Progress */}
+                    {/* Progresso */}
                     <td style={{ padding: '12px 24px 12px 8px', width: 210, verticalAlign: 'middle' }}>
                       {isRoot ? (
                         pct > 0 ? (
                           <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: isSel ? '#3b82f6' : '#374151' }}>
-                              {pct % 1 === 0 ? pct : pct.toFixed(2)}%
-                            </span>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: isSel ? '#2563eb' : '#374151' }}>{fmtPct(pct)}%</span>
                           </div>
                         ) : null
                       ) : (
@@ -334,14 +336,13 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
                       )}
                     </td>
 
-                    {/* Edit button (hover) */}
+                    {/* Editar (selecionada) */}
                     {podeEditar && (
-                      <td style={{ padding: '12px 12px 12px 0', width: 36, verticalAlign: 'middle' }}>
+                      <td style={{ padding: '12px 16px 12px 0', width: 40, verticalAlign: 'middle', textAlign: 'right' }}>
                         <button
                           onClick={(ev) => { ev.stopPropagation(); openEdit(etapa) }}
                           title="Editar"
-                          className="group-hover:opacity-100"
-                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: '#9ca3af', opacity: isSel ? 1 : 0, transition: 'opacity .15s', display: 'flex', alignItems: 'center' }}
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 14, color: '#9ca3af', opacity: isSel ? 1 : 0, transition: 'opacity .15s' }}
                           onMouseEnter={(ev) => { (ev.currentTarget as HTMLElement).style.opacity = '1' }}
                           onMouseLeave={(ev) => { if (!isSel) (ev.currentTarget as HTMLElement).style.opacity = '0' }}
                         >
@@ -357,7 +358,7 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
         )}
       </div>
 
-      {/* ── Scroll to top ─────────────────────────────────────────── */}
+      {/* Voltar ao topo */}
       {showTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -378,7 +379,7 @@ export default function GanttView({ obraId, etapas, perfil }: Props) {
         </button>
       )}
 
-      {/* ── Modal ─────────────────────────────────────────────────── */}
+      {/* Modal */}
       <EtapaModal
         modal={modal} form={form} roots={roots} podeEditar={podeEditar}
         isPending={isPending} msg={msg} confirmDelete={confirmDelete}
@@ -420,30 +421,25 @@ function EtapaModal({ modal, form, roots, isPending, msg, confirmDelete, onClose
       <div style={{ position: 'relative', background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', padding: 24 }}
         onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>{isEdit ? 'Editar atividade' : 'Nova atividade'}</h2>
+          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827' }}>{isEdit ? 'Editar etapa' : (form.etapa_pai_id ? 'Nova subetapa' : 'Nova etapa')}</h2>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label style={lbl}>Nome da atividade *</label>
+            <label style={lbl}>Nome da etapa *</label>
             <input value={form.nome} onChange={(e) => onChange('nome', e.target.value)} style={inp} placeholder="Ex: Fundação, Estrutura, Revestimento..." />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div>
-              <label style={lbl}>Etapa pai</label>
-              <select value={form.etapa_pai_id ?? ''} onChange={(e) => onChange('etapa_pai_id', e.target.value || null)} style={inp}>
-                <option value="">— Atividade raiz</option>
-                {roots.filter((r) => !isEdit || r.id !== etapaId).map((r) => (
-                  <option key={r.id} value={r.id}>{r.nome}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label style={lbl}>Ordem</label>
-              <input type="number" min={0} value={form.ordem} onChange={(e) => onChange('ordem', Number(e.target.value))} style={inp} />
-            </div>
+          <div>
+            <label style={lbl}>Etapa pai (opcional)</label>
+            <select value={form.etapa_pai_id ?? ''} onChange={(e) => onChange('etapa_pai_id', e.target.value || null)} style={inp}>
+              <option value="">— Nenhuma (etapa principal)</option>
+              {roots.filter((r) => !isEdit || r.id !== etapaId).map((r) => (
+                <option key={r.id} value={r.id}>{r.nome}</option>
+              ))}
+            </select>
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: '#9ca3af' }}>Selecione uma etapa para criar uma subetapa.</p>
           </div>
 
           <div style={{ borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>

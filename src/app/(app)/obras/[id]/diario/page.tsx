@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import type { Etapa } from '@/types/supabase'
-import ListaTarefasClient from './ListaTarefasClient'
+import GanttView from '../cronograma/GanttView'
+import type { PerfilGlobal } from '@/types/supabase'
 
 export default async function DiarioListPage({
   params,
@@ -14,14 +14,23 @@ export default async function DiarioListPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: obra }, { data: etapasRaw }] = await Promise.all([
-    supabase.from('obras').select('id, nome').eq('id', id).single(),
+  const [{ data: obra }, { data: usuarioRow }, { data: etapas }] = await Promise.all([
+    supabase.from('obras').select('id, nome, data_inicio, previsao_termino').eq('id', id).single(),
+    supabase.from('usuarios').select('perfil').eq('id', user.id).single(),
     supabase.from('etapas').select('*').eq('obra_id', id).order('ordem').order('nome'),
   ])
 
   if (!obra) notFound()
 
-  const etapas = (etapasRaw ?? []) as Etapa[]
+  const perfil = (usuarioRow?.perfil ?? 'encarregado') as PerfilGlobal
 
-  return <ListaTarefasClient obraId={id} etapas={etapas} />
+  return (
+    <GanttView
+      obraId={id}
+      obraDataInicio={obra.data_inicio}
+      obraDataFim={obra.previsao_termino}
+      etapas={etapas ?? []}
+      perfil={perfil}
+    />
+  )
 }
